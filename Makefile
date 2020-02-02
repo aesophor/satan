@@ -1,6 +1,6 @@
 KVERSION = $(shell uname -r)
 
-obj-m = medusa.o
+obj-m = satan.o
 medusa-objs = 
 
 all:
