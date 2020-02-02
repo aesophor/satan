@@ -1,3 +1,4 @@
+// Copyright (c) 2020 Marco Wang <m.aesophor@gmail.com>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/kallsyms.h>
