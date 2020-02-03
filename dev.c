@@ -6,7 +6,7 @@
 #include <linux/string.h>
 #include <linux/uaccess.h>
 
-#define DEVICE_NAME "tty99"
+#define DEVICE_NAME "tty64"
 
 static int ret = 0;
 static int major_number = 0;  // character device major number
@@ -95,15 +95,43 @@ static int satan_dev_close(struct inode *inode, struct file *filp)
         return 0;
 }
 
-static ssize_t satan_dev_read(struct file *filp, char *user_buf, size_t count, loff_t *cur_offset)
+static ssize_t satan_dev_read(struct file *filp, char *user_buf, size_t len, loff_t *offset)
 {
         pr_info("satan: reading from device file\n");
-        return copy_to_user(user_buf, satan_dev.data, count);  // (dest, src, count)
+
+        if (sizeof(satan_dev.data) <= *offset) {
+                ret = 0;
+        } else {
+                ret = min(len, sizeof(satan_dev.data) - (size_t) *offset);
+                if (copy_to_user(user_buf, satan_dev.data + *offset, ret)) {
+                        ret = -EFAULT;
+                } else {
+                        *offset += ret;
+                }
+        }
+
+        return ret;
 }
 
-static ssize_t satan_dev_write(struct file *filp, const char *user_buf, size_t count, loff_t *cur_offset)
+static ssize_t satan_dev_write(struct file *filp, const char *user_buf, size_t len, loff_t *offset)
 {
         pr_info("satan: writing to device file\n");
-        memset(satan_dev.data, 0, sizeof(satan_dev.data));
-        return copy_from_user(satan_dev.data, user_buf, count);  // (dest, src, count)
+
+        if (sizeof(satan_dev.data) <= *offset) {
+                ret = 0;
+        } else {
+                // If the buffer is not large enough, return -ENOSPC.
+                if (sizeof(satan_dev.data) - (size_t) *offset < len) {
+                        ret = -ENOSPC;
+                } else {
+                        if (copy_from_user(satan_dev.data + *offset, user_buf, len)) {
+                                ret = -EFAULT;
+                        } else {
+                                ret = len;
+                                *offset += ret;
+                        }
+                }
+        }
+
+        return ret;
 }
