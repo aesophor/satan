@@ -21,8 +21,10 @@ static struct cred *cred = NULL;
 
 static int satan_dev_open(struct inode *inode, struct file *filp);
 static int satan_dev_close(struct inode *inode, struct file *filp);
-static ssize_t satan_dev_read(struct file *filp, char *user_buf, size_t count, loff_t *cur_offset);
-static ssize_t satan_dev_write(struct file *filp, const char *user_buf, size_t count, loff_t *cur_offset);
+static ssize_t satan_dev_read(struct file *filp, char __user *buf,
+                              size_t count, loff_t *offset);
+static ssize_t satan_dev_write(struct file *filp, const char __user *buf,
+                               size_t count, loff_t *cur_offset);
 
 
 int satan_dev_init(struct module *m)

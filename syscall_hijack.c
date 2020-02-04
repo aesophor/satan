@@ -16,24 +16,24 @@ static unsigned long *real_sys_read = NULL;
 static unsigned long ptr = 0;
 
 /* from: /usr/src/linux-headers-$(uname -r)/include/linux/syscalls.h */
-asmlinkage int (*real_execve)(const char *filename,
-                              char *const argv[],
-                              char *const envp[]);
+asmlinkage int (*real_execve)(const char __user *filename,
+                              const char __user *const __user *argv,
+                              const char __user *const __user *envp);
 
-asmlinkage int satan_execve(const char *filename,
-                            char *const argv[],
-                            char *const envp[])
+asmlinkage int satan_execve(const char __user *filename,
+                            const char __user *const __user *argv,
+                            const char __user *const __user *envp)
 {
         pr_info("satan: hijacked execve(%s, ...)\n", filename);
         return real_execve(filename, argv, envp);
 }
 
 
-asmlinkage int (*real_lstat64)(const char *filename,
-                               struct stat64 *statbuf);
+asmlinkage int (*real_lstat64)(const char __user *filename,
+                               struct stat64 __user *statbuf);
 
-asmlinkage long satan_lstat64(const char *filename,
-                              struct stat64 *statbuf)
+asmlinkage long satan_lstat64(const char __user *filename,
+                              struct stat64 __user *statbuf)
 {
         pr_info("satan: hijacked lstat64(%s, ...)\n", filename);
 
