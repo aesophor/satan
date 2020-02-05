@@ -7,4 +7,4 @@ int satan_syscall_hook(int id, void *hook);
 int satan_syscall_unhook(int id);
 unsigned long *satan_syscall_get_original(int id);
 
-#endif  // SATAN_SYSCALL_HIJACK_H_
+#endif  // SATAN_SYSCALL_H_

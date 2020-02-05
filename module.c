@@ -1,5 +1,5 @@
 // Copyright (c) 2020 Marco Wang <m.aesophor@gmail.com>
-#include "hide.h"
+#include "module.h"
 
 #include <linux/list.h>
 #include <linux/module.h>

@@ -6,7 +6,7 @@
 
 #include "dev.h"
 #include "file.h"
-#include "hide.h"
+#include "module.h"
 #include "syscall.h"
 
 #define SECRET_FILE "/dev/.satan"
