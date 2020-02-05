@@ -6,6 +6,7 @@
 
 #include "util.h"
 
+
 #define BRUTEFORCE_ADDR_BEGIN 0xc0000000
 #define BRUTEFORCE_ADDR_END 0xe0000000
 #define SYS_CALL_ID_SIZE 512
@@ -15,6 +16,7 @@ static bool is_hooked[SYS_CALL_ID_SIZE] = { false };
 
 static unsigned long *original[SYS_CALL_ID_SIZE] = { NULL };
 static unsigned long **table = NULL;
+
 
 /**
  * satan_syscall_find_table() - Attempts to find sys_call_table.
