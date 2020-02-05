@@ -14,4 +14,8 @@
                 write_cr0(read_cr0() | 0x10000);                   \
         } while (0);
 
+
+void satan_basename(const char *path, char *buf, size_t buf_size);
+void satan_filename(const char *path, char *buf, size_t buf_size);
+
 #endif  // SATAN_UTIL_H_
