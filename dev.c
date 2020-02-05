@@ -100,7 +100,7 @@ static int satan_dev_close(struct inode *inode, struct file *filp)
         return 0;
 }
 
-static ssize_t satan_dev_read(struct file *filp, char *user_buf, size_t len, loff_t *offset)
+static ssize_t satan_dev_read(struct file *filp, char __user *buf, size_t len, loff_t *offset)
 {
         pr_info("satan: reading from device file\n");
 
@@ -108,7 +108,7 @@ static ssize_t satan_dev_read(struct file *filp, char *user_buf, size_t len, lof
                 ret = 0;
         } else {
                 ret = min(len, sizeof(satan_dev.data) - (size_t) *offset);
-                if (copy_to_user(user_buf, satan_dev.data + *offset, ret)) {
+                if (copy_to_user(buf, satan_dev.data + *offset, ret)) {
                         ret = -EFAULT;
                 } else {
                         *offset += ret;
@@ -118,7 +118,7 @@ static ssize_t satan_dev_read(struct file *filp, char *user_buf, size_t len, lof
         return ret;
 }
 
-static ssize_t satan_dev_write(struct file *filp, const char *user_buf, size_t len, loff_t *offset)
+static ssize_t satan_dev_write(struct file *filp, const char __user *buf, size_t len, loff_t *offset)
 {
         pr_info("satan: writing to device file\n");
 
@@ -129,7 +129,7 @@ static ssize_t satan_dev_write(struct file *filp, const char *user_buf, size_t l
                 if (sizeof(satan_dev.data) - (size_t) *offset < len) {
                         ret = -ENOSPC;
                 } else {
-                        if (copy_from_user(satan_dev.data + *offset, user_buf, len)) {
+                        if (copy_from_user(satan_dev.data + *offset, buf, len)) {
                                 ret = -EFAULT;
                         } else {
                                 ret = len;
