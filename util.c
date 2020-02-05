@@ -1,6 +1,7 @@
 // Copyright (c) 2020 Marco Wang <m.aesophor@gmail.com>
 #include "util.h"
 
+#include <linux/kernel.h>
 #include <linux/string.h>
 
 
@@ -15,7 +16,7 @@ void satan_basename(const char *path, char *buf, size_t buf_size)
         char *last_delim = NULL;
 
         if (strlen(path) >= buf_size) {
-                pr_error("satan: util: buffer not large enough!\n");
+                pr_err("satan: util: buffer not large enough!\n");
                 return;
         }
 
@@ -23,7 +24,7 @@ void satan_basename(const char *path, char *buf, size_t buf_size)
         last_delim = strrchr(buf, '/');
 
         if (!last_delim) {
-                pr_error("satan: util: invalid path: %s\n", path);
+                pr_err("satan: util: invalid path: %s\n", path);
                 return;
         }
 
@@ -43,7 +44,7 @@ void satan_filename(const char *path, char *buf, size_t buf_size)
         size_t filename_len = 0;
 
         if (!last_delim) {
-                pr_error("satan: util: invalid path: %s\n", path);
+                pr_err("satan: util: invalid path: %s\n", path);
                 return;
         }
 
@@ -51,7 +52,7 @@ void satan_filename(const char *path, char *buf, size_t buf_size)
         filename_len = strlen(filename);
 
         if (filename_len >= buf_size) {
-                pr_error("satan: util: buffer not large enough!\n");
+                pr_err("satan: util: buffer not large enough!\n");
                 return;
         }
 

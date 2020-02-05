@@ -77,7 +77,7 @@ init_end:
         return ret;
 }
 
-void satan_dev_destroy(void)
+void satan_dev_exit(void)
 {
         // Unregister our character device from the kernel
         cdev_del(satan_dev.cdev);

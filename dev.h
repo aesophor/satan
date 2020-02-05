@@ -5,6 +5,6 @@
 #include <linux/module.h>
 
 int satan_dev_init(struct module *m);
-void satan_dev_destroy(void);
+void satan_dev_exit(void);
 
 #endif  // SATAN_DEV_H_

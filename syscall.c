@@ -17,13 +17,30 @@ static bool is_hooked[SYS_CALL_ID_SIZE] = { false };
 static unsigned long *original[SYS_CALL_ID_SIZE] = { NULL };
 static unsigned long **table = NULL;
 
+static int satan_syscall_find_table(void);
+
+
+/**
+ * satan_syscall_init() - Initializes satan's syscall module.
+ *
+ * Return: zero on success and non-zero otherwise.
+ */
+int satan_syscall_init(void)
+{
+        return satan_syscall_find_table();
+}
+
+int satan_syscall_exit(void)
+{
+        return 0;
+}
 
 /**
  * satan_syscall_find_table() - Attempts to find sys_call_table.
  *
  * Return: zero on success and non-zero otherwise.
  */
-int satan_syscall_find_table(void)
+static int satan_syscall_find_table(void)
 {
         unsigned long *real_sys_read = NULL;
         unsigned long ptr = 0;

