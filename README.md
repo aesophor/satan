@@ -1,5 +1,9 @@
-## Overview
-Satanic rootkit is implemented as a Linux kernel module targeting 4.9.0 or later kernels (for x86 and x86_64).
+<div align="center">
+  
+<h3>SATANIC ROOTKIT</h3>
+
+<img src="https://github.com/aesophor/satanic-rootkit/blob/master/.meta/banner.jpg">
+</div>
 
 ## Features
 * Local privilege escalation (grant root shell)
