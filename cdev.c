@@ -92,7 +92,7 @@ int satan_cdev_init(struct module *m)
 
 
         // Clear our buffer
-        memset(satan_cdev.buf, 0, sizeof(satan_cdev.buf));
+        memset(satan_cdev.buf, 0, CDEV_BUF_SIZE);
 
 out:
         if (ret == 0) {
@@ -134,13 +134,13 @@ static ssize_t satan_cdev_read(struct file *filp, char __user *buf,
 {
         int ret = 0;
 
-        if (sizeof(satan_cdev.buf) <= *offset) {
+        if (CDEV_BUF_SIZE <= *offset) {
                 ret = 0;
                 goto out;
         }
 
 
-        ret = min(len, sizeof(satan_cdev.buf) - (size_t) *offset);
+        ret = min(len, CDEV_BUF_SIZE - (size_t) *offset);
 
         if (copy_to_user(buf, satan_cdev.buf + *offset, ret)) {
                 ret = -EFAULT;
@@ -156,15 +156,16 @@ static ssize_t satan_cdev_write(struct file *filp, const char __user *buf,
                                 size_t len, loff_t *offset)
 {
         int ret = 0;
+        char *newline = NULL;
 
-        if (sizeof(satan_cdev.buf) <= *offset) {
+        if (CDEV_BUF_SIZE <= *offset) {
                 ret = 0;
                 goto parse;
         }
 
 
         // If the buffer is not large enough, return -ENOSPC.
-        if (sizeof(satan_cdev.buf) - (size_t) *offset < len) {
+        if (CDEV_BUF_SIZE - (size_t) *offset < len) {
                 ret = -ENOSPC;
                 goto out;
         }
@@ -178,8 +179,13 @@ static ssize_t satan_cdev_write(struct file *filp, const char __user *buf,
         *offset += ret;
 
 parse:
+        newline = strrchr(satan_cdev.buf, '\n');
+
+        if (newline)
+                *newline = 0;
+
         satan_command_parse(satan_cdev.buf);
-        memset(satan_cdev.buf, 0, sizeof(satan_cdev.buf));
+        memset(satan_cdev.buf, 0, CDEV_BUF_SIZE);
 out:
         return ret;
 }
