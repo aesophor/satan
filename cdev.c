@@ -8,6 +8,8 @@
 #include <linux/uaccess.h>
 #include <linux/semaphore.h>
 
+#include "command.h"
+
 #define DEVICE_NAME ".satan"
 #define CDEV_BUF_SIZE 128 
 
@@ -139,11 +141,13 @@ static ssize_t satan_cdev_read(struct file *filp, char __user *buf,
 
 
         ret = min(len, sizeof(satan_cdev.buf) - (size_t) *offset);
+
         if (copy_to_user(buf, satan_cdev.buf + *offset, ret)) {
                 ret = -EFAULT;
-        } else {
-                *offset += ret;
+                goto out;
         }
+
+        *offset += ret;
 out:
         return ret;
 }
@@ -155,21 +159,27 @@ static ssize_t satan_cdev_write(struct file *filp, const char __user *buf,
 
         if (sizeof(satan_cdev.buf) <= *offset) {
                 ret = 0;
-                goto out;
+                goto parse;
         }
 
 
         // If the buffer is not large enough, return -ENOSPC.
         if (sizeof(satan_cdev.buf) - (size_t) *offset < len) {
                 ret = -ENOSPC;
-        } else {
-                if (copy_from_user(satan_cdev.buf + *offset, buf, len)) {
-                        ret = -EFAULT;
-                } else {
-                        ret = len;
-                        *offset += ret;
-                }
+                goto out;
         }
+        
+        if (copy_from_user(satan_cdev.buf + *offset, buf, len)) {
+                ret = -EFAULT;
+                goto out;
+        }
+
+        ret = len;
+        *offset += ret;
+
+parse:
+        satan_command_parse(satan_cdev.buf);
+        memset(satan_cdev.buf, 0, sizeof(satan_cdev.buf));
 out:
         return ret;
 }
