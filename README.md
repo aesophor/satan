@@ -3,8 +3,8 @@ Satanic rootkit is implemented as a Linux kernel module targeting 4.9.0 or later
 
 ## Features
 * Local privilege escalation (grant root shell)
-* Hide any directory or file by ABSOLUTE PATH.
-* Hide any process by PID
+* Hide directories or files **by absolute path**
+* Hide processes by PID
 * ...
 
 ## Build Requirements
