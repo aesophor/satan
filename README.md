@@ -1,15 +1,11 @@
 ## Overview
-Satanic rootkit is implemented as a Linux kernel module targeting 4.9.0 or later kernels (for both x86 and x86_64 platforms).
-
-<br>
+Satanic rootkit is implemented as a Linux kernel module targeting 4.9.0 or later kernels (for x86 and x86_64).
 
 ## Features
 * Local privilege escalation (grant root shell)
 * Hide any directory or file by ABSOLUTE PATH.
 * Hide any process by PID
 * ...
-
-<br>
 
 ## Build Requirements / Installation
 #### Build Requirements
@@ -28,7 +24,6 @@ $ make
 ```
 $ sudo insmod satan.ko
 ```
-<br>
 
 ## License
 Available under [GPL-2.0 License](https://github.com/aesophor/satanic-rootkit/blob/master/LICENSE)
