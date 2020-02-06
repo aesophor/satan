@@ -7,12 +7,11 @@ Satanic rootkit is implemented as a Linux kernel module targeting 4.9.0 or later
 * Hide any process by PID
 * ...
 
-## Build Requirements / Installation
-#### Build Requirements
+## Build Requirements
 * gcc
 * Linux headers
 
-#### Installation
+## Installation
 1. Build kernel module
 ```
 $ git clone https://github.com/aesophor/satanic-rootkit.git
