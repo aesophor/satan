@@ -6,7 +6,7 @@
 
 
 /**
- * satan_basename() - Extracts the basename (dirname) from a path.
+ * satan_basename() - Extracts the basename (dirname) from a path, and place it in `buf`.
  * @path: absolute path
  * @buf: the buffer into which the extracted basename will be placed.
  * @buf_size: the size of `buffer` in bytes.
@@ -14,13 +14,15 @@
 void satan_basename(const char *path, char *buf, size_t buf_size)
 {
         char *last_delim = NULL;
-
-        if (strlen(path) >= buf_size) {
+        size_t path_len = strnlen(path, buf_size);
+       
+        // We need to make sure that `buf` contains a NULL terminated string.
+        if (path_len >= buf_size) {
                 pr_err("satan: util: buffer not large enough!\n");
                 return;
         }
 
-        strncpy(buf, path, strlen(path));
+        strncpy(buf, path, path_len);
         last_delim = strrchr(buf, '/');
 
         if (!last_delim) {
@@ -32,7 +34,7 @@ void satan_basename(const char *path, char *buf, size_t buf_size)
 }
 
 /**
- * satan_filename() - Extracts the filename from a path.
+ * satan_filename() - Extracts the filename from a path, and place it in `buf`.
  * @path: absolute path
  * @buf: the buffer into which the extracted filename will be placed.
  * @buf_size: the size of `buffer` in bytes.
@@ -49,13 +51,13 @@ void satan_filename(const char *path, char *buf, size_t buf_size)
         }
 
         filename = last_delim + 1;
-        filename_len = strlen(filename);
+        filename_len = strnlen(filename, buf_size);
 
         if (filename_len >= buf_size) {
                 pr_err("satan: util: buffer not large enough!\n");
                 return;
         }
 
-        strncpy(buf, filename, strlen(filename));
+        strncpy(buf, filename, filename_len);
         buf[buf_size - 1] = 0;
 }

