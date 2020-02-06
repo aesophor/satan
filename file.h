@@ -5,7 +5,7 @@
 #include <linux/string.h>
 
 int satan_file_init(void);
-int satan_file_exit(void);
+void satan_file_exit(void);
 
 int satan_file_hide(const char *path);
 int satan_file_unhide(const char *path);
