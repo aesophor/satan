@@ -8,6 +8,9 @@
 * Hide processes by PID
 * ...
 
+## Tested On
+* Debian 9 stretch 4.9.0-11
+
 ## Build Requirements
 * gcc
 * Linux headers
