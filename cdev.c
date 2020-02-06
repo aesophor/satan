@@ -183,7 +183,7 @@ static ssize_t satan_cdev_write(struct file *filp, const char __user *buf, size_
 
 static char *satan_devnode(struct device *dev, umode_t *mode)
 {
-        // Set the device file's permission to 0666.
+        // Set the permission on device file to 0666.
         if (mode)
                 *mode = 0666;
 
