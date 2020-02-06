@@ -28,10 +28,8 @@ int satan_command_parse(const char *cmd)
 
         arg = strnchr(buf, CMD_BUF_SIZE - 1, ' ');
         
-        if (arg) {
-                *arg = 0;
-                arg++;
-        }
+        if (arg)
+                *arg++ = 0;
        
 
         pr_info("satan: command: received (%s,%s)\n", buf, arg);
