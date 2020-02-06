@@ -9,6 +9,13 @@
 #define PATH_BUF_SIZE 32
 static char path_buf[PATH_BUF_SIZE] = {0};
 
+
+/**
+ * satan_proc_hide() - Hides a process by pid.
+ * @path: the PID of the process to hide.
+ *
+ * Return: zero on success and non-zero otherwise.
+ */
 int satan_proc_hide(unsigned int pid)
 {
         memset(path_buf, 0, PATH_BUF_SIZE);
@@ -17,6 +24,12 @@ int satan_proc_hide(unsigned int pid)
         return satan_file_hide(path_buf);
 }
 
+/**
+ * satan_proc_unhide() - Unhides a hidden process by pid.
+ * @path: the PID of the process to hide.
+ *
+ * Return: zero on success and non-zero otherwise.
+ */
 int satan_proc_unhide(unsigned int pid)
 {
         memset(path_buf, 0, PATH_BUF_SIZE);
