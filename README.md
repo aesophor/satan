@@ -1,8 +1,5 @@
 <div align="center">
-  
-<h3>SATANIC ROOTKIT</h3>
-
-<img src="https://github.com/aesophor/satanic-rootkit/blob/master/.meta/banner.jpg">
+  <img src="https://github.com/aesophor/satanic-rootkit/blob/master/.meta/banner.jpg">
 </div>
 
 ## Features
