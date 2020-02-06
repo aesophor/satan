@@ -7,6 +7,7 @@ $(ROOTKIT)-y += main.o
 $(ROOTKIT)-y += cdev.o
 $(ROOTKIT)-y += file.o
 $(ROOTKIT)-y += module.o
+$(ROOTKIT)-y += proc.o
 $(ROOTKIT)-y += syscall.o
 $(ROOTKIT)-y += util.o
 

