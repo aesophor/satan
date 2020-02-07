@@ -2,6 +2,6 @@
 #ifndef SATAN_COMMAND_H_
 #define SATAN_COMMAND_H_
 
-int satan_command_parse(const char *cmd);
+int satan_command_parse(const char *s);
 
 #endif  // SATAN_COMMAND_H_
