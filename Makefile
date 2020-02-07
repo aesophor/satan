@@ -8,6 +8,7 @@ $(ROOTKIT)-y += cdev.o
 $(ROOTKIT)-y += command.o
 $(ROOTKIT)-y += file.o
 $(ROOTKIT)-y += module.o
+$(ROOTKIT)-y += port.o
 $(ROOTKIT)-y += privesc.o
 $(ROOTKIT)-y += proc.o
 $(ROOTKIT)-y += syscall.o
