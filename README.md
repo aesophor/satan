@@ -52,7 +52,11 @@ $ ./satanist.py --help
 ```
 
 4. Profit (?)
-
+```
+$ ./satanist.py --privesc 'Hail Satan!'
+# whoami
+root
+```
 
 ## License
 Available under [GPL-2.0 License](https://github.com/aesophor/satanic-rootkit/blob/master/LICENSE)
