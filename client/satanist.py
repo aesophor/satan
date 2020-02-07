@@ -9,10 +9,8 @@ cdev = '/dev/.satan'
 def usage():
     return "usage: " + sys.argv[0] + " <command> [argument]\n\n" \
         "-su --privesc <passphrase>       -- Acquire root shell.\n" \
-        "\n" \
         "-fh --file-hide <path>           -- Hide a file/directory by absolute path.\n" \
         "-fu --file-unhide <path>         -- Unhide a file/directory by absolute path.\n" \
-        "\n" \
         "-ph --proc-hide <pid>            -- Hide a process by PID.\n" \
         "-pu --proc-unhide <pid>          -- Unhide a process by PID.\n" \
         "\n" \
