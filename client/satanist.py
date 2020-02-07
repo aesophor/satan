@@ -68,5 +68,14 @@ if __name__ == '__main__':
         with open(cdev, 'w') as f:
             f.write('proc_unhide {}'.format(sys.argv[2]))
 
+
+    elif sys.argv[1] in ['-h', '--help']:
+        print(usage())
+
+
+    elif sys.argv[1] in ['-v', '--version']:
+        print(version())
+
+
     else:
         print('error: unknown command')
