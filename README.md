@@ -9,8 +9,8 @@
 * Hide processes by PID
 * ...
 
-## satanist.py
-After installing the kernel module `satan.ko` on a victim's machine, one can use `satanist.py` to command the rootkit.
+## Usage
+After inserting `satan.ko` into Linux kernel, one can use `satanist.py` to command the rootkit.
 ```
 > ./satanist.py --help                 
 usage: ./satanist.py <command> [argument]
@@ -33,7 +33,7 @@ usage: ./satanist.py <command> [argument]
 * GNU Make
 * Linux headers
 
-## Usage
+## Installation
 1. Build kernel module.
 ```
 $ git clone https://github.com/aesophor/satanic-rootkit.git
@@ -50,6 +50,9 @@ root# insmod satan.ko
 ```
 $ ./satanist.py --help
 ```
+
+4. Profit (?)
+
 
 ## License
 Available under [GPL-2.0 License](https://github.com/aesophor/satanic-rootkit/blob/master/LICENSE)
