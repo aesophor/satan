@@ -1,5 +1,6 @@
 modules.order
 Module.symvers
+client/.payload
 .tmp_versions/*
 *.mod.c
 *.cmd
