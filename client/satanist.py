@@ -13,10 +13,10 @@ def usage():
         "--file-unhide <path>       -- File/directory unhiding by absolute path.\n" \
         "--proc-hide <pid>          -- Process hiding by PID.\n" \
         "--proc-unhide <pid>        -- Process unhiding by PID.\n" \
-        "--port-hide <pid>          -- Port hiding by port number.\n" \
-        "--port-unhide <pid>        -- Port unhiding by port number.\n" \
-        "--mod-hide <pid>           -- Module hiding (hide itself from lsmod).\n" \
-        "--mod-unhide <pid>         -- Module unhiding (unhide itself from lsmod).\n" \
+        "--port-hide <port>         -- Port hiding by port number.\n" \
+        "--port-unhide <port>       -- Port unhiding by port number.\n" \
+        "--mod-hide                 -- Module hiding (hide itself from lsmod).\n" \
+        "--mod-unhide               -- Module unhiding (unhide itself from lsmod).\n" \
         "\n" \
         "-h --help                  -- Help message.\n" \
         "-v --version               -- Version info." \
