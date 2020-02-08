@@ -8,7 +8,7 @@
 * File/directory hiding **by absolute path**
 * Process hiding by PID
 * Port hiding
-* Hides the rootkit module itself
+* Hide the rootkit itself
 * ...
 
 ## Usage
