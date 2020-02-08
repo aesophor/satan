@@ -5,8 +5,10 @@
 
 ## Overview
 * Local privilege escalation (grant root shell)
-* Hide directories or files **by absolute path**
-* Hide processes by PID
+* File/directory hiding **by absolute path**
+* Process hiding by PID
+* Port hiding
+* Hides the rootkit module itself
 * ...
 
 ## Usage
@@ -15,14 +17,18 @@ After inserting `satan.ko` into Linux kernel, one can use `satanist.py` to comma
 > ./satanist.py --help                 
 usage: ./satanist.py <command> [argument]
 
--su --privesc <passphrase>       -- Acquire root shell.
--fh --file-hide <path>           -- Hide a file/directory by absolute path.
--fu --file-unhide <path>         -- Unhide a file/directory by absolute path.
--ph --proc-hide <pid>            -- Hide a process by PID.
--pu --proc-unhide <pid>          -- Unhide a process by PID.
+--privesc <passphrase>     -- Spawn a root shell (bash).
+--file-hide <path>         -- File/directory hiding by absolute path.
+--file-unhide <path>       -- File/directory unhiding by absolute path.
+--proc-hide <pid>          -- Process hiding by PID.
+--proc-unhide <pid>        -- Process unhiding by PID.
+--port-hide <pid>          -- Port hiding by port number.
+--port-unhide <pid>        -- Port unhiding by port number.
+--mod-hide <pid>           -- Module hiding (hide itself from lsmod).
+--mod-unhide <pid>         -- Module unhiding (unhide itself from lsmod).
 
--h --help                        -- Help message.
--v --version                     -- Version info.
+-h --help                  -- Help message.
+-v --version               -- Version info.
 ```
 
 ## Tested On
