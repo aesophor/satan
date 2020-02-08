@@ -22,10 +22,10 @@ usage: ./satanist.py <command> [argument]
 --file-unhide <path>       -- File/directory unhiding by absolute path.
 --proc-hide <pid>          -- Process hiding by PID.
 --proc-unhide <pid>        -- Process unhiding by PID.
---port-hide <pid>          -- Port hiding by port number.
---port-unhide <pid>        -- Port unhiding by port number.
---mod-hide <pid>           -- Module hiding (hide itself from lsmod).
---mod-unhide <pid>         -- Module unhiding (unhide itself from lsmod).
+--port-hide <port>         -- Port hiding by port number.
+--port-unhide <port>       -- Port unhiding by port number.
+--mod-hide                 -- Module hiding (hide itself from lsmod).
+--mod-unhide               -- Module unhiding (unhide itself from lsmod).
 
 -h --help                  -- Help message.
 -v --version               -- Version info.
