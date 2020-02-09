@@ -2,8 +2,26 @@
 #include "util.h"
 
 #include <linux/kernel.h>
+#include <linux/spinlock.h>
 #include <linux/string.h>
 
+extern void satan_asm_cr0_wp_disable(void);
+extern void satan_asm_cr0_wp_enable(void);
+
+
+static DEFINE_SPINLOCK(satan_spinlock);
+
+void satan_cr0_wp_disable(void)
+{
+	spin_lock_irq(&satan_spinlock);
+	satan_asm_cr0_wp_disable();	
+}
+
+void satan_cr0_wp_enable(void)
+{
+	satan_asm_cr0_wp_enable();
+	spin_unlock(&satan_spinlock);
+}
 
 /**
  * satan_basename() - Extracts the basename (dirname) from a path, and place it in `buf`.

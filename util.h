@@ -4,9 +4,11 @@
 
 #include <linux/types.h>
 
-#define CR0_WP_DISABLE     write_cr0(read_cr0() & (~ 0x10000));
-#define CR0_WP_DISABLE_END write_cr0(read_cr0() | 0x10000);
 
+void satan_cr0_wp_disable(void);
+void satan_cr0_wp_enable(void);
+#define CR0_WP_DISABLE     satan_cr0_wp_disable();
+#define CR0_WP_DISABLE_END satan_cr0_wp_enable();
 
 void satan_basename(const char *path, char *buf, size_t buf_size);
 void satan_filename(const char *path, char *buf, size_t buf_size);
