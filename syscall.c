@@ -42,6 +42,7 @@ int satan_syscall_exit(void)
  */
 static int satan_syscall_find_table(void)
 {
+	/*
         unsigned long *real_sys_read = NULL;
         unsigned long ptr = 0;
 
@@ -65,6 +66,12 @@ static int satan_syscall_find_table(void)
         pr_err("satan: unable to find sys_call_table!!!\n");
         table = NULL;
         return 1;
+	*/
+
+	table = (void *) kallsyms_lookup_name("sys_call_table");
+        pr_info("satan: syscall: found table via kallsyms: %p\n", table);
+	has_found_table = true;
+	return 0;
 }
 
 /**
