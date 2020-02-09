@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://github.com/aesophor/satanic-rootkit/blob/master/.meta/banner.jpg">
+  <img src="https://github.com/aesophor/satanic-rootkit/blob/master/.meta/banner.png">
   <b>CAUTION: Do NOT test this on physical machines!</b>
 </div>
 
